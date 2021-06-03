@@ -1,0 +1,29 @@
+.top-panel {
+  min-height: 32px;
+  max-height: 32px;
+  height: 32px;
+
+  background-color: var(--color-tertiary);
+  border-bottom: 1px solid var(--color-primary);
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  .button {
+    height: 100%;
+    width: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+
+    &.disabled {
+      cursor: default;
+
+      svg {
+        fill: var(--color-disabled);
+      }
+    }
+  }
+}

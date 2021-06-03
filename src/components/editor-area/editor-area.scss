@@ -1,0 +1,47 @@
+.editor-area {
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .vim-bar {
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+
+    background-color: var(--color-tertiary);
+    border-left: 1px solid var(--color-primary);
+    border-right: 1px solid var(--color-primary);
+
+    font-family: 'Anonymous Pro', monospace;
+
+    color: var(--color-secondary);
+    font-size: 14px;
+    padding: 2px 10px 4px 10px;
+
+    & > span:first-child {
+      padding-top: 2px;
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    & > span:last-child {
+      padding-top: 2px;
+      display: inline-block;
+    }
+
+    input {
+      background-color: transparent;
+      outline: none;
+      border: 0;
+      height: 14px;
+      padding: 0;
+      font-family: 'Anonymous Pro', monospace;
+
+      color: var(--color-secondary);
+      font-size: 14px;
+    }
+  }
+}
+

@@ -1,0 +1,38 @@
+.settings-view {
+  padding: 16px 0;
+  user-select: none;
+
+  h1, h2 {
+    color: #e8e8e8;
+    padding: 0 16px;
+  }
+
+  h1 {
+    border-bottom: 1px solid var(--color-tertiary);
+    padding-bottom: 14px;
+  }
+
+  .settings {
+    margin-top: 30px;
+
+    .setting {
+      font-size: 14px;
+      padding: 13px 16px;
+
+      &:hover {
+        background-color: #303134;
+      }
+
+      .setting-header {
+        strong {
+          color: #e8e8e8;
+        }
+      }
+
+      .setting-control {
+        margin-top: 9px;
+      }
+    }
+  }
+
+}

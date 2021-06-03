@@ -1,0 +1,29 @@
+.monaco-decoration-error {
+  border-left: 5px solid #a72626;
+  margin-left: 10px;
+  overflow: hidden;
+}
+
+.monaco-decoration-line-error {
+  background: #651f1f;
+}
+
+.monaco-decoration-word-error {
+  display: inline-block;
+  position: relative;
+
+  text-decoration: underline wavy red;
+}
+
+.code-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  overflow: hidden;
+  flex-grow: 1;
+
+  & > *:first-child {
+    flex-grow: 1;
+  }
+}

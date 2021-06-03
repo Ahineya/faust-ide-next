@@ -1,0 +1,40 @@
+.right-bar {
+  background-color: var(--color-tertiary);
+  width: 28px;
+  max-width: 28px;
+  min-width: 28px;
+  height: 100%;
+  user-select: none;
+
+  .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 15px 0;
+    cursor: pointer;
+
+    position: relative;
+
+    &:hover {
+      background-color: var(--color-primary);
+    }
+
+    &.active {
+      background-color: var(--color-primary);
+      &:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 3px;
+        background-color: var(--color-secondary);
+      }
+    }
+
+    .button-text {
+      writing-mode: vertical-lr;
+    }
+  }
+}
