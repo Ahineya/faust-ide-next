@@ -5,8 +5,9 @@ import {RightBar} from "../right-bar/right-bar";
 import {EditorArea} from "../editor-area/editor-area";
 import {layoutStore, TRightSidebarView, TSidebarView} from "../../stores/layout-store";
 import {SidebarView} from "../sidebar-view/sidebar-view";
-import SplitPane from "react-split-pane";
 import {RightBarView} from "../right-bar-view/right-bar-view";
+import {ReflexContainer, ReflexElement, ReflexSplitter} from "react-reflex";
+import 'react-reflex/styles.css';
 
 export const MainArea = () => {
 
@@ -30,25 +31,62 @@ export const MainArea = () => {
     return () => subscriptions.forEach(s => s.unsubscribe());
   }, []);
 
-  const setPanelSize = (size: number) => {
-    setLeftSidebarSize(size);
+  const setPanelSize = ({domElement}: { domElement: Element | Text }) => {
+    if (!domElement) {
+      return;
+    }
+    setLeftSidebarSize((domElement as HTMLDivElement).offsetWidth);
   }
 
-  const changeRightSidebarSize = (size: number) => {
-    setRightSidebarSize(size);
+  const changeRightSidebarSize = ({domElement}: { domElement: Element | Text }) => {
+    if (!domElement) {
+      return;
+    }
+
+    setRightSidebarSize((domElement as HTMLDivElement).offsetWidth);
   }
 
   return <div className="main-area">
     <Sidebar/>
-    <div className="div" style={{flexGrow: 1, height: '100%', position: 'relative'}}>
-      <SplitPane split="vertical" minSize={200} size={leftSidebarSize} onChange={setPanelSize} allowResize={!!leftSidebarView}>
-        <SidebarView/>
-        <SplitPane split="vertical" minSize={200} defaultSize={500} primary="second" pane1Style={{overflow: "hidden"}} size={rightSidebarSize} onChange={changeRightSidebarSize} allowResize={!!rightSidebarViews.length}>
+    {/*<div className="div" style={{flexGrow: 1, height: '100%', position: 'relative'}}>*/}
+
+
+      <ReflexContainer orientation="vertical">
+
+        {
+          leftSidebarView && <ReflexElement className="left-pane" minSize={200} size={leftSidebarSize} onResize={setPanelSize}>
+            <SidebarView/>
+          </ReflexElement>
+        }
+        {
+          leftSidebarView && <ReflexSplitter/>
+        }
+
+        <ReflexElement className="right-pane" key="editor">
           <EditorArea/>
-          <RightBarView/>
-        </SplitPane>
-      </SplitPane>
-    </div>
+        </ReflexElement>
+
+        {
+          !!rightSidebarViews.length && <ReflexSplitter/>
+        }
+
+        {
+          !!rightSidebarViews.length && <ReflexElement minSize={200} size={rightSidebarSize} onResize={changeRightSidebarSize}>
+            <RightBarView/>
+          </ReflexElement>
+        }
+      </ReflexContainer>
+
+      {/*<div style={{height: 0}}>*/}
+      {/*  <SplitPane split="vertical" minSize={200} size={leftSidebarSize} onChange={setPanelSize}*/}
+      {/*             allowResize={!!leftSidebarView}>*/}
+      {/*    <SplitPane split="vertical" minSize={200} defaultSize={500} primary="second" pane1Style={{overflow: "hidden"}}*/}
+      {/*               size={rightSidebarSize} onChange={changeRightSidebarSize} allowResize={!!rightSidebarViews.length}>*/}
+
+      {/*    </SplitPane>*/}
+      {/*  </SplitPane>*/}
+      {/*</div>*/}
+    {/*</div>*/}
     <RightBar/>
   </div>;
 }

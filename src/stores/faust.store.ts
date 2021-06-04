@@ -1,18 +1,10 @@
-import MonoFactory = Faust.MonoFactory;
-import Compiler = Faust.Compiler;
-import FaustMonoNode = Faust.FaustMonoNode;
-import LibFaust = Faust.LibFaust;
-import SVGDiagrams = Faust.SVGDiagrams;
 import {BehaviorSubject} from "rxjs";
 import {editorStore} from "./editor.store";
 import {StaticScope} from "../scope/StaticScope";
 import {Analyser} from "../scope/analyser";
 
-declare const FaustModule: Faust.FaustModule;
-
-const audioCtx = new window.AudioContext();
-const outputAnalyser = audioCtx.createAnalyser();
-
+// @ts-ignore
+import {Faust} from "faust2webaudio/dist/index.min.js";
 
 const styleDiagram = (diagram: string) => {
   return diagram.replaceAll("\n", "").replace(/<style>.*<\/style>/, `<style>
@@ -39,15 +31,10 @@ const styleDiagram = (diagram: string) => {
 
 class FaustStore {
   public onCodeChanged = new BehaviorSubject(`import("stdfaust.lib");
-process = ba.pulsen(1, 10000) : pm.djembe(60, 0.3, 0.4, 1) <: dm.freeverb_demo;`);
+process = ba.pulsen(1, 10000) : pm.elecGuitar(3, 0.8, 1, 0.5) <: dm.freeverb_demo;
+//process = ba.pulsen(1, 10000) : pm.djembe(60, 0.3, 0.4, 1) <: dm.freeverb_demo;`);
 
-  private libFaust: LibFaust | null = null;
-
-  private faustFactory: MonoFactory | null = null;
-  private faustCompiler: Compiler | null = null;
-  private faustDiagrams: SVGDiagrams | null = null;
-
-  private node: FaustMonoNode | null = null;
+  private node: any;// FaustAudioWorkletNode & AudioWorkletNode | null = null;
 
   public onDiagramChanged = new BehaviorSubject('');
 
@@ -56,18 +43,19 @@ process = ba.pulsen(1, 10000) : pm.djembe(60, 0.3, 0.4, 1) <: dm.freeverb_demo;`
   private plot: StaticScope | null = null;
   private analyser: Analyser | null = null;
 
+  private faust: Promise<Faust>;
+
+  private audioContext: AudioContext | null = null;
+
   constructor() {
-    FaustModule().then((module: any) => {
-      const libFaust = Faust.createLibFaust(module);
-      if (!libFaust) {
-        return;
-      }
+    this.faust = new Faust({
+      wasmLocation: '/faust/libfaust-wasm.wasm',
+      dataLocation: '/faust/libfaust-wasm.data',
+    }).ready;
+  }
 
-      this.libFaust = libFaust;
-
-      this.faustCompiler = Faust.createCompiler(libFaust);
-      this.faustFactory = Faust.createMonoFactory();
-    });
+  getFaust() {
+    return this.faust;
   }
 
   setCode(code: string) {
@@ -75,57 +63,46 @@ process = ba.pulsen(1, 10000) : pm.djembe(60, 0.3, 0.4, 1) <: dm.freeverb_demo;`
   }
 
   compile(code: string) {
+    // Check if plot is opened
+
+    if (!this.audioContext) {
+      this.audioContext = new window.AudioContext();
+    }
+
     if (!this.plot) {
       this.plot = new StaticScope({container: document.querySelector("#plot-ui")!});
-      // outputAnalyser.drawHandler =
       this.analyser = new Analyser(16, "continuous");
       this.analyser.drawHandler = this.plot.draw;
-      this.analyser.getSampleRate = () => audioCtx.sampleRate;
+      this.analyser.getSampleRate = () => this.audioContext!.sampleRate;
       this.analyser.drawMode = 'continuous';
       this.analyser.fftSize = 256;
       this.analyser.fftOverlap = 2;
     }
 
-    if (!this.faustFactory || !this.faustCompiler || !this.libFaust) {
-      return null;
-    }
-
-    const diagrams = Faust.createSVGDiagrams(this.libFaust, "diagram", code, "");
-    if (!diagrams.success()) {
-      const error = diagrams.error();
-      editorStore.showError(error);
-      return;
-    } else {
+    this.faust.then(faust => {
       editorStore.hideError();
-      this.faustDiagrams = diagrams;
-    }
 
-    const diagram = diagrams.getSVG();
-
-    console.log(diagram);
-
-    const restyledDiagram = styleDiagram(diagram);
-
-    this.onDiagramChanged.next(restyledDiagram);
-
-    console.log(`Faust compiler version: ${this.faustCompiler.version()}`);
-
-    this.faustFactory.compileNode(audioCtx, "Faust", this.faustCompiler, code, "-ftz 2", false, 128).then(node => {
-      if (!node) {
+      try {
+        const diagram = faust.getDiagram(code, {"-I": ["libraries/", "project/"]});
+        this.onDiagramChanged.next(diagram);
+      } catch (e) {
+        editorStore.showError(e.message);
         return;
       }
 
-      audioCtx.resume();
+      faust.getNode(code, { audioCtx: this.audioContext, useWorklet: true, bufferSize: 128, voices: 1, args: {"-I": ["libraries/", "project/"]}, plotHandler: this.analyser!.plotHandler})
+      // faust.getNode(code, { audioCtx, useWorklet: true, bufferSize: 128, voices: 1, args: {"-I": ["libraries/", "project/"]}, plotHandler: () => {}})
+        .then((node: any) => {
+          if (!node) {
+            return;
+          }
+          console.log(node);
 
-      this.node?.disconnect();
-
-      this.node = node;
-      this.node.connect(outputAnalyser);
-
-      outputAnalyser.connect(audioCtx.destination);
-      this.onRunningChanged.next(true);
+          this.node = node as any;//FaustAudioWorkletNode & AudioWorkletNode;
+          this.node.connect(this.audioContext!.destination);
+          this.onRunningChanged.next(true);
+        })
     });
-
   }
 
   stop() {
@@ -134,6 +111,7 @@ process = ba.pulsen(1, 10000) : pm.djembe(60, 0.3, 0.4, 1) <: dm.freeverb_demo;`
     }
 
     this.node.disconnect();
+    this.node.destroy();
     this.onRunningChanged.next(false);
   }
 
@@ -142,11 +120,11 @@ process = ba.pulsen(1, 10000) : pm.djembe(60, 0.3, 0.4, 1) <: dm.freeverb_demo;`
   }
 
   loadDiagram(name: string) {
-    if (!this.faustDiagrams) {
-      return;
-    }
-
-    this.onDiagramChanged.next(styleDiagram(this.faustDiagrams.getSVG(name)));
+    this.getFaust()
+      .then(faust => {
+        const diagram = faust.fs.readFile(`/FaustDSP-svg/${name}`, { encoding: "utf8" }) as string;
+        this.onDiagramChanged.next(diagram);
+      });
   }
 }
 

@@ -5,6 +5,7 @@ import {editor, MarkerSeverity} from "monaco-editor";
 // @ts-ignore
 import {initVimMode} from 'monaco-vim';
 import {settingsStore} from "./settings.store";
+import {faustStore} from "./faust.store";
 
 const capitalize = (value: string): string => {
   return `${value[0].toUpperCase()}${value.slice(1)}`;
@@ -28,7 +29,10 @@ class EditorStore {
 
   setMonacoInstance(monaco: Monaco) {
     this.monaco = monaco;
-    faustLangRegister(this.monaco, Faust);
+    faustStore.getFaust()
+      .then(faust => {
+        faustLangRegister(monaco, faust);
+      })
   }
 
   setEditor(editor: editor.ICodeEditor) {
@@ -71,15 +75,14 @@ class EditorStore {
   showError(error: string) {
     const editor = this.editor!;
 
-    const [, strline, , errorName, , errorData] = error.split(':').map(s => s.trim());
+    const [, strline, , errorName, errorData] = error.split(':').map(s => s.trim());
+
+    console.error(error.split(':').map(s => s.trim()))
+
     const line = parseInt(strline, 10) || Number.MAX_SAFE_INTEGER;
     const lineCount = editor.getModel()!.getLineCount();
 
     const errorLine = line > lineCount ? 1 : line;
-
-    console.log('LINE', line, lineCount, errorLine);
-
-    console.log(errorName, errorData);
 
     if (errorName === "undefined symbol") {
       console.log(editor.getModel()!.getLineContent(errorLine));

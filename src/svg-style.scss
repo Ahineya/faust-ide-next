@@ -3,16 +3,16 @@
 .dashline {stroke:#AFB1B3; stroke-linecap:round; stroke-width:0.25; stroke-dasharray:3,3;}
 .text  {font-family:Arial; font-size:7px; text-anchor:middle; fill:#AFB1B3;}
 .label {font-family:Arial; font-size:7px; fill:#AFB1B3}
-.error {stroke-width:0.3; fill:red; text-anchor:middle;}
+.error {stroke-width:0.3; fill: #666600; text-anchor:middle;}
 .reason{stroke-width:0.3; fill:none; text-anchor:middle;}
 .carre {stroke:black; stroke-width:0.5; fill:none;}
 .shadow{stroke:none; fill:#aaaaaa; filter:url(#filter);}
-.rect  {stroke:none; fill:#cccccc;}
+//.rect  {stroke:none; fill:#cccccc;}
 .border {stroke:none; fill:none;}
 .linkbox {stroke:none; fill:#284869;}
 .normalbox {stroke:none; fill:#525861;}
-.uibox {stroke:none; fill:#3a694e;}
-.slotbox {stroke:none; fill:#47945E;}
+.uibox {stroke:none; fill: #3a694e;}
+.slotbox {stroke:none; fill: #265c58;}
 .numcolorbox {stroke:none; fill:#753c07;}
 .invcolorbox {stroke:none; fill:#2b2b2b;}
 .link:hover { cursor:pointer;}

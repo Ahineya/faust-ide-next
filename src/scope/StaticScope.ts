@@ -167,7 +167,7 @@ export class StaticScope {
         ctx.lineWidth = 2;
         for (let i = 0; i < t.length; i++) {
             ctx.beginPath();
-            ctx.strokeStyle = `hsl(${i * 60}, 100%, 85%)`;
+            ctx.strokeStyle = `hsl(${i * 60}, 35%, 60%)`;
             let maxInStep;
             let minInstep;
             for (let j = $0; j < $1; j++) {
@@ -261,7 +261,7 @@ export class StaticScope {
         ctx.lineWidth = 2;
         for (let i = 0; i < t.length; i++) {
             ctx.beginPath();
-            ctx.strokeStyle = t.length === 1 ? "white" : `hsl(${i * 60}, 100%, 85%)`;
+            ctx.strokeStyle = t.length === 1 ? "white" : `hsl(${i * 60}, 35%, 60%)`;
             let maxInStep;
             let minInStep;
             for (let j = $0; j < $1; j++) {
@@ -324,7 +324,7 @@ export class StaticScope {
         const step = Math.max(1, Math.round(1 / gridX));
         for (let i = 0; i < f.length; i++) {
             ctx.beginPath();
-            ctx.fillStyle = f.length === 1 ? "white" : `hsl(${i * 60}, 100%, 85%)`;
+            ctx.fillStyle = f.length === 1 ? "white" : `hsl(${i * 60}, 35%, 60%)`;
             let maxInStep;
             for (let j = $0; j < $1; j++) {
                 const $j = wrap(j, $f, l);
@@ -454,7 +454,7 @@ export class StaticScope {
     }
     static drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number) {
         ctx.save();
-        ctx.fillStyle = "#181818";
+        ctx.fillStyle = "#2B2B2B";
         ctx.fillRect(0, 0, w, h);
         ctx.restore();
     }
@@ -478,9 +478,9 @@ export class StaticScope {
         const left = 50;
         const bottom = 20;
         const eventStrokeStyle = "#ff8800";
-        const bufferStrokeStyle = "#004000";
+        const bufferStrokeStyle = "#064c06";
         const normalStrokeStyle = "#404040";
-        ctx.fillStyle = "#DDDD99";
+        ctx.fillStyle = "#AFB1B3";
         ctx.font = "10px Consolas, monospace";
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";

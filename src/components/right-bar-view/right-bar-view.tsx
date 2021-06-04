@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from "react";
 import "./right-bar-view.scss";
 import {DiagramPanel} from "../diagram-panel/diagram-panel";
-import SplitPane from "react-split-pane";
 import {layoutStore, TRightSidebarView} from "../../stores/layout-store";
-
+import {Plot} from "../plot/plot";
+import {ReflexContainer, ReflexElement, ReflexSplitter} from "react-reflex";
 
 export const RightBarView = () => {
 
@@ -14,6 +14,14 @@ export const RightBarView = () => {
     const subscriptions = [
       layoutStore.onRightBarViewsChanged.subscribe(views => {
         setViews(views);
+        if (views.length > 1) {
+          setSize(200);
+        }
+        {
+          if (views.length <= 1) {
+            setSize(0);
+          }
+        }
       })
     ];
 
@@ -24,13 +32,38 @@ export const RightBarView = () => {
     setSize(size);
   }
 
+  const getViews = () => {
+
+    const elements: JSX.Element[] = [];
+
+    views.forEach(v => {
+      if (v === "diagram") {
+        elements.push(<ReflexElement minSize={200} key="diagram" propagateDimensions>
+          <DiagramPanel/>
+        </ReflexElement>)
+        elements.push(<ReflexSplitter key="diagram-splitter"/>);
+        return;
+      }
+
+      if (v === "plot") {
+        elements.push(<ReflexElement minSize={200} key="plot" propagateDimensions>
+          <Plot/>
+        </ReflexElement>)
+        elements.push(<ReflexSplitter key="plot-splitter"/>);
+        return;
+      }
+    });
+
+    elements.pop();
+
+    return elements;
+  }
+
   return views.length
     ? <div className="right-bar-view">
-      <SplitPane split="horizontal" minSize={200} pane1Style={{overflow: 'hidden', width: '100%'}}
-                 allowResize={views.length > 1} onChange={changeSize} size={size} primary="second">
-        <DiagramPanel/>
-        <div/>
-      </SplitPane>
+      <ReflexContainer orientation="horizontal">
+        {getViews()}
+      </ReflexContainer>
     </div>
     : <div/>
 }
