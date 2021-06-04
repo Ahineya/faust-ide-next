@@ -47,7 +47,7 @@ export const RightBarView = () => {
 
       if (v === "plot") {
         elements.push(<ReflexElement minSize={200} key="plot" propagateDimensions>
-          <Plot/>
+          <Plot key="plot-element"/>
         </ReflexElement>)
         elements.push(<ReflexSplitter key="plot-splitter"/>);
         return;

@@ -3,13 +3,76 @@
   height: 100%;
   width: 100%;
 
-  #plot-ui {
-    max-height: 100%;
+  .plot-header {
+    height: 32px;
+    background-color: var(--color-tertiary);
+  }
+
+  .plot-ui {
+    position: relative;
+    max-height: calc(100% - 32px);
     height: 100%;
     width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
     .static-scope-ui-controller {
       position: absolute;
+      top: 0;
+    }
+
+    .static-scope-default {
+      position: absolute;
+    }
+
+    .static-scope-data {
+      display: flex;
+      height: 100%;
+      width: 100%;
+      flex-direction: column;
+      font-size: 0.75em;
+      font-family: Consolas, monospace;
+      overflow-x: auto;
+
+      & > .static-scope-channel {
+        display: grid;
+        position: relative;
+        width: 1px;
+        flex: 1 1 auto;
+        grid-template-columns: repeat(auto-fill, 80px);
+        grid-template-rows: repeat(auto-fill, 20px);
+        grid-auto-flow: column;
+        border-bottom: #505050 dashed 1px;
+
+        & > .static-scope-cell {
+          display: block;
+          width: 80px;
+          height: 20px;
+          background-color: inherit;
+
+          & > span {
+            display: inline-block;
+            border: #606060 solid 1px;
+            text-align: right;
+            padding: 0 1px;
+
+            &:first-child {
+              width: 30px;
+              color: #ab924a;
+            }
+
+            &:last-child {
+              width: 50px;
+            }
+          }
+
+          &.highlight > span {
+            border-color: #ff8800;
+            background-color: #552200
+          }
+        }
+      }
     }
   }
 }

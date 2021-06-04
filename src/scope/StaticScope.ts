@@ -2,7 +2,7 @@
 import { wrap, indexToFreq } from "./utils";
 import "./StaticScope.scss";
 
-enum EScopeMode {
+export enum EScopeMode {
     Data = 0,
     Interleaved = 1,
     Oscilloscope = 2,
