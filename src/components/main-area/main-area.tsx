@@ -48,9 +48,6 @@ export const MainArea = () => {
 
   return <div className="main-area">
     <Sidebar/>
-    {/*<div className="div" style={{flexGrow: 1, height: '100%', position: 'relative'}}>*/}
-
-
       <ReflexContainer orientation="vertical">
 
         {
@@ -62,7 +59,7 @@ export const MainArea = () => {
           leftSidebarView && <ReflexSplitter/>
         }
 
-        <ReflexElement className="right-pane" key="editor">
+        <ReflexElement className="right-pane" key="editor" minSize={300}>
           <EditorArea/>
         </ReflexElement>
 
@@ -76,17 +73,6 @@ export const MainArea = () => {
           </ReflexElement>
         }
       </ReflexContainer>
-
-      {/*<div style={{height: 0}}>*/}
-      {/*  <SplitPane split="vertical" minSize={200} size={leftSidebarSize} onChange={setPanelSize}*/}
-      {/*             allowResize={!!leftSidebarView}>*/}
-      {/*    <SplitPane split="vertical" minSize={200} defaultSize={500} primary="second" pane1Style={{overflow: "hidden"}}*/}
-      {/*               size={rightSidebarSize} onChange={changeRightSidebarSize} allowResize={!!rightSidebarViews.length}>*/}
-
-      {/*    </SplitPane>*/}
-      {/*  </SplitPane>*/}
-      {/*</div>*/}
-    {/*</div>*/}
     <RightBar/>
   </div>;
 }

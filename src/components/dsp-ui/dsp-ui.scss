@@ -1,0 +1,9 @@
+.dsp-ui {
+  height: 100%;
+  overflow: auto;
+
+  & > div {
+    height: 100%;
+    width: 100%;
+  }
+}

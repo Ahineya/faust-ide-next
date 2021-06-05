@@ -1,11 +1,11 @@
 import {BehaviorSubject} from "rxjs";
 
 export type TSidebarView = 'documents' | 'settings';
-export type TRightSidebarView = 'diagram' | 'plot';
+export type TRightSidebarView = 'diagram' | 'plot' | 'ui';
 
 class LayoutStore {
   public onSidebarViewChanged = new BehaviorSubject<TSidebarView | null>(null);
-  public onRightBarViewsChanged = new BehaviorSubject<TRightSidebarView[]>(['plot']);
+  public onRightBarViewsChanged = new BehaviorSubject<TRightSidebarView[]>(['ui']);
 
   public showDocuments() {
     this.onSidebarViewChanged.next("documents");
@@ -34,6 +34,15 @@ class LayoutStore {
       this.onRightBarViewsChanged.next(rightSidebarViews.filter(v => v !== 'plot'));
     } else {
       this.onRightBarViewsChanged.next([...rightSidebarViews, 'plot']);
+    }
+  }
+
+  public toggleUI() {
+    const rightSidebarViews = this.onRightBarViewsChanged.getValue();
+    if (rightSidebarViews.includes('ui')) {
+      this.onRightBarViewsChanged.next(rightSidebarViews.filter(v => v !== 'ui'));
+    } else {
+      this.onRightBarViewsChanged.next([...rightSidebarViews, 'ui']);
     }
   }
 

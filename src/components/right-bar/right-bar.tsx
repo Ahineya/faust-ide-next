@@ -16,15 +16,24 @@ export const RightBar = () => {
     layoutStore.togglePlot();
   }
 
+  const toggleUI = () => {
+    layoutStore.toggleUI();
+  }
+
   return <div className="right-bar">
     <div className={classNames("button", {active: views.includes("diagram")})} onClick={toggleDiagram}>
       <div className="button-text">
         Diagram
       </div>
     </div>
-     <div className={classNames("button", {active: views.includes("plot")})} onClick={togglePlot}>
+    <div className={classNames("button", {active: views.includes("plot")})} onClick={togglePlot}>
       <div className="button-text">
         Plot
+      </div>
+    </div>
+    <div className={classNames("button", {active: views.includes("ui")})} onClick={toggleUI}>
+      <div className="button-text">
+        DSP UI
       </div>
     </div>
   </div>;

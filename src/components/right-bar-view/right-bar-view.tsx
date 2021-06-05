@@ -4,6 +4,7 @@ import {DiagramPanel} from "../diagram-panel/diagram-panel";
 import {layoutStore, TRightSidebarView} from "../../stores/layout-store";
 import {Plot} from "../plot/plot";
 import {ReflexContainer, ReflexElement, ReflexSplitter} from "react-reflex";
+import {DspUi} from "../dsp-ui/dsp-ui";
 
 export const RightBarView = () => {
 
@@ -50,6 +51,14 @@ export const RightBarView = () => {
           <Plot key="plot-element"/>
         </ReflexElement>)
         elements.push(<ReflexSplitter key="plot-splitter"/>);
+        return;
+      }
+
+      if (v === "ui") {
+        elements.push(<ReflexElement minSize={200} key="ui" propagateDimensions>
+          <DspUi key="ui-element"/>
+        </ReflexElement>)
+        elements.push(<ReflexSplitter key="ui-splitter"/>);
         return;
       }
     });

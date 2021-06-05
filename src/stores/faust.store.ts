@@ -6,29 +6,7 @@ import {Analyser} from "../scope/analyser";
 // @ts-ignore
 import {Faust} from "faust2webaudio/dist/index.min.js";
 import {plotStore} from "./plot.store";
-
-const styleDiagram = (diagram: string) => {
-  return diagram.replaceAll("\n", "").replace(/<style>.*<\/style>/, `<style>
-.arrow {stroke:#AFB1B3; stroke-width:0.25; fill:none}
-.line  {stroke:#AFB1B3; stroke-linecap:round; stroke-width:0.25;}
-.dashline {stroke:#AFB1B3; stroke-linecap:round; stroke-width:0.25; stroke-dasharray:3,3;}
-.text  {font-family:Arial; font-size:7px; text-anchor:middle; fill:#AFB1B3;}
-.label {font-family:Arial; font-size:7px; fill:#AFB1B3}
-.error {stroke-width:0.3; fill:red; text-anchor:middle;}
-.reason{stroke-width:0.3; fill:none; text-anchor:middle;}
-.carre {stroke:black; stroke-width:0.5; fill:none;}
-.shadow{stroke:none; fill:#aaaaaa; filter:url(#filter);}
-.rect  {stroke:none; fill:#cccccc;}
-.border {stroke:none; fill:none;}
-.linkbox {stroke:none; fill:#284869;}
-.normalbox {stroke:none; fill:#525861;}
-.uibox {stroke:none; fill:#3a694e;}
-.slotbox {stroke:none; fill:#47945E;}
-.numcolorbox {stroke:none; fill:#753c07;}
-.invcolorbox {stroke:none; fill:#2b2b2b;}
-.link:hover { cursor:pointer;}
-</style>`);
-}
+import {uiStore} from "./ui.store";
 
 class FaustStore {
   public onCodeChanged = new BehaviorSubject(`declare name \t\t"synth";
@@ -178,7 +156,8 @@ revsig = re.zita_rev1_stereo(
 reverbmix = reverbg(vslider("[1] Mix [style: knob]", 0, 0, 1, 0.01): si.smoo);
 // END reverb
 
-gate = ba.pulsen(10000, 22000);//button("Gate"): si.smooth(0.001);
+//gate = ba.pulsen(10000, 22000);
+gate = button("Gate"): si.smooth(0.001);
 
 // BEGIN helpers
 stereo(mono) = mono <: _, _;
@@ -281,14 +260,9 @@ maing(x) = vgroup("",x);
   private node: any;// FaustAudioWorkletNode & AudioWorkletNode | null = null;
 
   public onDiagramChanged = new BehaviorSubject('');
-
   public onRunningChanged = new BehaviorSubject(false);
 
-  private plot: StaticScope | null = null;
-  private analyser: Analyser | null = null;
-
   private faust: Promise<Faust>;
-
   private audioContext: AudioContext | null = null;
 
   constructor() {
@@ -307,21 +281,9 @@ maing(x) = vgroup("",x);
   }
 
   compile(code: string) {
-    // Check if plot is opened
-
     if (!this.audioContext) {
       this.audioContext = new window.AudioContext();
     }
-
-    // if (!this.plot) {
-    //   this.plot = new StaticScope({container: document.querySelector("#plot-ui")!});
-    //   this.analyser = new Analyser(16, "continuous");
-    //   this.analyser.drawHandler = this.plot.draw;
-    //   this.analyser.getSampleRate = () => this.audioContext!.sampleRate;
-    //   this.analyser.drawMode = 'continuous';
-    //   this.analyser.fftSize = 256;
-    //   this.analyser.fftOverlap = 2;
-    // }
 
     this.faust.then(faust => {
       editorStore.hideError();
@@ -334,18 +296,34 @@ maing(x) = vgroup("",x);
         return;
       }
 
-      faust.getNode(code, { audioCtx: this.audioContext, useWorklet: true, bufferSize: 128, voices: 1, args: {"-I": ["libraries/", "project/"]}, plotHandler: plotStore.getAnalyserPlotHandler()})
-      // faust.getNode(code, { audioCtx, useWorklet: true, bufferSize: 128, voices: 1, args: {"-I": ["libraries/", "project/"]}, plotHandler: () => {}})
+      faust.getNode(code, {
+        audioCtx: this.audioContext,
+        useWorklet: true,
+        bufferSize: 128,
+        voices: 0,
+        args: {"-I": ["libraries/", "project/"]},
+        plotHandler: plotStore.getAnalyserPlotHandler()
+      })
         .then((node: any) => {
           if (!node) {
             return;
           }
-          console.log(node);
-
           this.node = node as any;//FaustAudioWorkletNode & AudioWorkletNode;
           this.node.connect(this.audioContext!.destination);
+
           console.log(node);
           (window as any).MYDSP = node;
+
+          const paramsObject: {[key: string]: number} = {};
+          const params = node.getParams().reduce((acc: typeof paramsObject, curr: string) => {
+            acc[curr] = node.getParamValue(curr);
+            return acc;
+          }, paramsObject);
+
+          console.log(params);
+
+          uiStore.setUI(node.getUI(), paramsObject);
+
           this.onRunningChanged.next(true);
         })
     });
@@ -368,9 +346,18 @@ maing(x) = vgroup("",x);
   loadDiagram(name: string) {
     this.getFaust()
       .then(faust => {
-        const diagram = faust.fs.readFile(`/FaustDSP-svg/${name}`, { encoding: "utf8" }) as string;
+        const diagram = faust.fs.readFile(`/FaustDSP-svg/${name}`, {encoding: "utf8"}) as string;
         this.onDiagramChanged.next(diagram);
       });
+  }
+
+  setParamValue(address: string, value: number) {
+    if (!this.node) {
+      return;
+    }
+
+    this.node.setParamValue(address, value);
+    uiStore.setParamValue(address, value);
   }
 }
 
