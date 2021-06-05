@@ -4,10 +4,10 @@ options {
     tokenVocab=FaustLexer;
     }
 
-program : statement* EOF;
+statementlist : statement | variantlist statement;
+program : (statementlist)* EOF;
 
-//statementlist : (statement | variantlist)+;
-variantlist : variant+;
+variantlist : variant;
 variant : FLOATMODE | DOUBLEMODE | QUADMODE | FIXEDPOINTMODE;
 
 importStatement : IMPORT LPAR uqstring RPAR ENDDEF;
@@ -27,6 +27,12 @@ defname: ident;
 arglist : argument
     | arglist PAR argument;
 
+reclist : recinition*;
+
+recinition: recname DEF expression ENDDEF;
+
+recname : DELAY1 ident;
+
 deflist : variantlist | definition;
 
 argument : argument SEQ argument
@@ -35,9 +41,11 @@ argument : argument SEQ argument
     | argument REC argument
     | infixexpr;
 
+params : ident | params PAR ident;
+
 expression : infixexpr
     | expression WITH LBRAQ (definition | variantlist)+ RBRAQ
-//    | expression LTREC LBRAQ reclist RBRAQ
+    | expression LETREC LBRAQ reclist RBRAQ
     | expression REC expression
     | expression PAR expression
     | expression SEQ expression
@@ -158,16 +166,16 @@ primitive
     | SUB ident
     
     | LPAR expression RPAR
-//    | LAMBDA LPAR params RPAR DOT LPAR expression RPAR
-//    | CASE LBRAQ rulelist RBRAQ	
-//    | ffunction
-//    | fconst
-//    | fvariable
+    | LAMBDA LPAR params RPAR DOT LPAR expression RPAR
+    | CASE LBRAQ rulelist RBRAQ
+    | ffunction
+    | fconst
+    | fvariable
     | COMPONENT LPAR uqstring RPAR
     | LIBRARY LPAR uqstring RPAR
-//    | ENVIRONMENT LBRAQ
-//    | WAVEFORM LBRAQ vallist RBRAQ
-//    | ROUTE LPAR argument PAR argument PAR expression RPAR
+    | ENVIRONMENT LBRAQ (statement | variantlist)* RBRAQ
+    | WAVEFORM LBRAQ vallist RBRAQ
+    | ROUTE LPAR argument PAR argument PAR expression RPAR
     | button
     | checkbox
     | vslider
@@ -179,15 +187,19 @@ primitive
     | vbargraph
     | hbargraph
     | soundfile
-//
-//    | fpar
-//    | fseq
-//    | fsum
-//    | fprod
-//
-//    | finputs
-//    | foutputs
+
+    | fpar
+    | fseq
+    | fsum
+    | fprod
+
+    | finputs
+    | foutputs
 ;
+
+ffunction : FFUNCTION LPAR signature PAR fstring PAR string RPAR;
+fconst : FCONSTANT LPAR type name PAR fstring RPAR;
+fvariable : FVARIABLE LPAR type name PAR fstring RPAR;
 
 button : BUTTON LPAR uqstring RPAR;
 checkbox : CHECKBOX LPAR uqstring RPAR;
@@ -201,10 +213,21 @@ vbargraph : VBARGRAPH LPAR uqstring PAR argument PAR argument RPAR;
 hbargraph : HBARGRAPH LPAR uqstring PAR argument PAR argument RPAR;
 soundfile : SOUNDFILE LPAR uqstring PAR argument RPAR;
 
+fpar : IPAR LPAR ident PAR argument PAR expression RPAR;
+fseq : ISEQ LPAR ident PAR argument PAR expression RPAR;
+fsum : ISUM LPAR ident PAR argument PAR expression RPAR;
+fprod : IPROD LPAR ident PAR argument PAR expression RPAR;
+finputs : INPUTS LPAR expression RPAR;
+foutputs : OUTPUTS LPAR expression RPAR;
+
+rulelist : rule | rulelist rule;
+
+rule : LPAR arglist RPAR ARROW expression ENDDEF;
+
 ident: IDENT;
-
 uqstring : STRING;
-
+fstring : STRING | FSTRING;
+vallist : number | vallist PAR number;
 number : INT
     | FLOAT
     | ADD INT
@@ -213,3 +236,13 @@ number : INT
     | SUB FLOAT;
 string : STRING;
 name : IDENT;
+type : INTCAST | FLOATCAST;
+signature : type fun LPAR typelist RPAR;
+
+fun: singleprecisionfun | singleprecisionfun OR doubleprecisionfun | singleprecisionfun OR doubleprecisionfun OR quadprecisionfun;
+singleprecisionfun : IDENT;
+doubleprecisionfun : IDENT;
+quadprecisionfun : IDENT;
+
+
+typelist : type | typelist PAR type;
