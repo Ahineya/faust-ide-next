@@ -4,178 +4,179 @@ options {
     tokenVocab=FaustLexer;
     }
 
-statementlist : statement | variantlist statement;
-program : (statementlist)* EOF;
+variantstatement: precision = variant variantStatement = statement;
+program : (statement | variantstatement)* EOF;
 
-variantlist : variant;
 variant : FLOATMODE | DOUBLEMODE | QUADMODE | FIXEDPOINTMODE;
 
-importStatement : IMPORT LPAR uqstring RPAR ENDDEF;
-statement : importStatement
-    | DECLARE name string ENDDEF
-    | DECLARE name name string ENDDEF
-    | definition
+importStatement : IMPORT LPAR importName = uqstring RPAR ENDDEF;
+statement : imp = importStatement
+    | DECLARE decname = name decval = string ENDDEF
+    | DECLARE decname = name decarg = name decval = string ENDDEF
+    | def = definition
 //    | BDOC doc ENDDOC
 ;
 
 definition
-    : defname LPAR arglist RPAR DEF expression ENDDEF
-    | defname DEF expression ENDDEF;
+    : identname = defname LPAR args = arglist RPAR DEF expr = expression ENDDEF
+    | identname = defname DEF expr = expression ENDDEF;
 
 defname: ident;
 
-arglist : argument
-    | arglist PAR argument;
+arglist : arg = argument | list = arglist op = PAR arg = argument;
 
 reclist : recinition*;
 
-recinition: recname DEF expression ENDDEF;
+recinition: identname = recname DEF expr = expression ENDDEF;
 
-recname : DELAY1 ident;
+recname : DELAY1 identname = ident;
 
-deflist : variantlist | definition;
+deflist : variant | definition;
 
-argument : argument SEQ argument
-    | argument SPLIT argument
-    | argument MIX argument
-    | argument REC argument
-    | infixexpr;
+argument : left = argument op = SEQ right = argument
+    | left = argument op = SPLIT right = argument
+    | left = argument op = MIX right = argument
+    | left = argument op = REC right = argument
+    | expr = infixexpr;
 
 params : ident | params PAR ident;
 
-expression : infixexpr
-    | expression WITH LBRAQ (definition | variantlist)+ RBRAQ
-    | expression LETREC LBRAQ reclist RBRAQ
-    | expression REC expression
-    | expression PAR expression
-    | expression SEQ expression
-    | expression SPLIT expression
-    | expression MIX expression;
+withdef : (definition | variant definition)*;
+
+expression : infexpr = infixexpr
+    | expr = expression op=WITH LBRAQ defs = withdef RBRAQ
+    | expr = expression op=LETREC LBRAQ recs = reclist RBRAQ
+    | left = expression op=REC right = expression
+    | left = expression op=PAR right = expression
+    | left = expression op=SEQ right = expression
+    | left = expression op=SPLIT right = expression
+    | left = expression op=MIX right = expression;
 
 infixexpr
-    : primitive
+    : prim = primitive
 
-    | infixexpr FDELAY infixexpr
-    | infixexpr DELAY1
+    | left = infixexpr op = FDELAY right = infixexpr
+    | expr = infixexpr op = DELAY1
 
-    | infixexpr DOT ident
+    | left = infixexpr op = DOT identificator = ident
 
-    | infixexpr POWOP infixexpr
+    | left = infixexpr op = POWOP right = infixexpr
 
-    | infixexpr LSH infixexpr
-    | infixexpr RSH infixexpr
+    | left = infixexpr op = LSH right = infixexpr
+    | left = infixexpr op = RSH right = infixexpr
 
-    | infixexpr MUL infixexpr
-    | infixexpr DIV infixexpr
+    | left = infixexpr op = MUL right = infixexpr
+    | left = infixexpr op = DIV right = infixexpr
 
-    | infixexpr MOD infixexpr
+    | left = infixexpr op = MOD right = infixexpr
 
-    | infixexpr ADD infixexpr
-    | infixexpr SUB infixexpr
+    | left = infixexpr op = ADD right = infixexpr
+    | left = infixexpr op = SUB right = infixexpr
 
-    | infixexpr AND infixexpr
-    | infixexpr OR infixexpr
-    | infixexpr XOR infixexpr
+    | left = infixexpr op = AND right = infixexpr
+    | left = infixexpr op = OR right = infixexpr
+    | left = infixexpr op = XOR right = infixexpr
 
-    | infixexpr LT infixexpr
-    | infixexpr LE infixexpr
-    | infixexpr GT infixexpr
-    | infixexpr GE infixexpr
-    | infixexpr EQ infixexpr
-    | infixexpr NE infixexpr
+    | left = infixexpr op = LT right = infixexpr
+    | left = infixexpr op = LE right = infixexpr
+    | left = infixexpr op = GT right = infixexpr
+    | left = infixexpr op = GE right = infixexpr
+    | left = infixexpr op = EQ right = infixexpr
+    | left = infixexpr op = NE right = infixexpr
 
-    | infixexpr LPAR arglist RPAR
-    | infixexpr LCROC deflist* RCROC
+    | callee = infixexpr LPAR arguments = arglist RPAR // "function call"
+    | left = infixexpr LCROC definitions = deflist* RCROC // EXPLICIT SUBSTITUTION, replacing what in scope with custom definitions
 ;
 
 primitive
-    : INT
-    | FLOAT
-    | ADD INT
-    | ADD FLOAT
-    | SUB INT
-    | SUB FLOAT
+    : value = INT
+    | value = FLOAT
+    | sign = ADD value = INT
+    | sign = ADD value = FLOAT
+    | sign = SUB value = INT
+    | sign = SUB value = FLOAT
     
-    | WIRE
-    | CUT
+    | wire = WIRE
+    | cut = CUT
     
-    | MEM
-    | PREFIX
+    | primitivetype = MEM
+    | primitivetype = PREFIX
     
-    | INTCAST
-    | FLOATCAST
+    | primitivetype = INTCAST
+    | primitivetype = FLOATCAST
     
-    | ADD
-    | SUB
-    | MUL
-    | DIV
-    | MOD
-    | FDELAY
+    | primitivetype = ADD
+    | primitivetype = SUB
+    | primitivetype = MUL
+    | primitivetype = DIV
+    | primitivetype = MOD
+    | primitivetype = FDELAY
     
-    | AND
-    | OR
-    | XOR
+    | primitivetype = AND
+    | primitivetype = OR
+    | primitivetype = XOR
     
-    | LSH
-    | RSH
+    | primitivetype = LSH
+    | primitivetype = RSH
     
-    | LT
-    | LE
-    | GT
-    | GE
-    | EQ
-    | NE
+    | primitivetype = LT
+    | primitivetype = LE
+    | primitivetype = GT
+    | primitivetype = GE
+    | primitivetype = EQ
+    | primitivetype = NE
     
-    | ATTACH
-    | ENABLE
-    | CONTROL
+    | primitivetype = ATTACH
+    | primitivetype = ENABLE
+    | primitivetype = CONTROL
     
-    | ACOS
-    | ASIN
-    | ATAN
-    | ATAN2
-    | COS
-    | SIN
-    | TAN
+    | primitivetype = ACOS
+    | primitivetype = ASIN
+    | primitivetype = ATAN
+    | primitivetype = ATAN2
+    | primitivetype = COS
+    | primitivetype = SIN
+    | primitivetype = TAN
     
-    | EXP
-    | LOG
-    | LOG10
-    | POWOP
-    | POWFUN
-    | SQRT
+    | primitivetype = EXP
+    | primitivetype = LOG
+    | primitivetype = LOG10
+    | primitivetype = POWOP
+    | primitivetype = POWFUN
+    | primitivetype = SQRT
     
-    | ABS
-    | MIN
-    | MAX
+    | primitivetype = ABS
+    | primitivetype = MIN
+    | primitivetype = MAX
     
-    | FMOD
-    | REMAINDER
+    | primitivetype = FMOD
+    | primitivetype = REMAINDER
     
-    | FLOOR
-    | CEIL
-    | RINT
+    | primitivetype = FLOOR
+    | primitivetype = CEIL
+    | primitivetype = RINT
     
-    | RDTBL
-    | RWTBL
+    | primitivetype = RDTBL
+    | primitivetype = RWTBL
     
-    | SELECT2
-    | SELECT3
+    | primitivetype = SELECT2
+    | primitivetype = SELECT3
     
-    | ident
-    | SUB ident
+    | primitiveident = ident
+    | sign = SUB primitiveident = ident
     
-    | LPAR expression RPAR
+    | LPAR primitiveexpr = expression RPAR
     | LAMBDA LPAR params RPAR DOT LPAR expression RPAR
-    | CASE LBRAQ rulelist RBRAQ
+    | CASE LBRAQ caserulelist RBRAQ
     | ffunction
     | fconst
     | fvariable
     | COMPONENT LPAR uqstring RPAR
     | LIBRARY LPAR uqstring RPAR
-    | ENVIRONMENT LBRAQ (statement | variantlist)* RBRAQ
+    | ENVIRONMENT LBRAQ (statement | variant)* RBRAQ
     | WAVEFORM LBRAQ vallist RBRAQ
     | ROUTE LPAR argument PAR argument PAR expression RPAR
+
     | button
     | checkbox
     | vslider
@@ -201,7 +202,7 @@ ffunction : FFUNCTION LPAR signature PAR fstring PAR string RPAR;
 fconst : FCONSTANT LPAR type name PAR fstring RPAR;
 fvariable : FVARIABLE LPAR type name PAR fstring RPAR;
 
-button : BUTTON LPAR uqstring RPAR;
+button : BUTTON LPAR caption = uqstring RPAR;
 checkbox : CHECKBOX LPAR uqstring RPAR;
 vslider : VSLIDER LPAR uqstring PAR argument PAR argument PAR argument PAR argument RPAR;
 hslider : HSLIDER LPAR uqstring PAR argument PAR argument PAR argument PAR argument RPAR;
@@ -220,11 +221,10 @@ fprod : IPROD LPAR ident PAR argument PAR expression RPAR;
 finputs : INPUTS LPAR expression RPAR;
 foutputs : OUTPUTS LPAR expression RPAR;
 
-rulelist : rule | rulelist rule;
+caserulelist : caserule | caserulelist caserule;
+caserule : LPAR arglist RPAR ARROW expression ENDDEF;
 
-rule : LPAR arglist RPAR ARROW expression ENDDEF;
-
-ident: IDENT;
+ident: identname = IDENT;
 uqstring : STRING;
 fstring : STRING | FSTRING;
 vallist : number | vallist PAR number;

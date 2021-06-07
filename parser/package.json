@@ -1,0 +1,23 @@
+{
+  "license": "GPL-3.0",
+  "type": "module",
+  "scripts": {
+    "buildParser": "scripts/build.sh",
+    "build": "yarn buildParser && yarn buildJS",
+    "buildJS": "tsc --project ./ && cp *.js ./build",
+    "buildAndRun": "yarn build && node build/index.js",
+    "start": "yarn buildJS && node build/index.js",
+    "debug": "yarn buildJS && node inspect build/index.js"
+  },
+  "devDependencies": {
+    "@types/antlr4": "^4.7.2",
+    "replace-in-file": "^6.2.0",
+    "typescript": "^4.3.2"
+  },
+  "dependencies": {
+    "tree-model": "^1.0.7"
+  },
+  "engines": {
+    "node": ">= 14"
+  }
+}

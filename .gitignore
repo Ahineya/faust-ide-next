@@ -2,3 +2,9 @@ build
 node_modules
 gen
 parser/FaustLexer.tokens
+parser/node_modules
+parser/build
+parser/generated
+parser/yarn-error.log
+yarn-error.log
+.idea
