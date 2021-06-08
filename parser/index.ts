@@ -7,7 +7,7 @@ import {FaustVisitor} from "./FaustVisitor.js";
 
 const {CommonTokenStream, InputStream} = antlr4;
 
-const input = `process = 2 * (2 + 2);`;
+const input = `process = route(1, 2, 3, 4, 5, 6);`;
 
 const chars = new InputStream(input, true)
 const lexer = new FaustLexer(chars);

@@ -33,9 +33,8 @@ recname : DELAY1 identname = ident;
 
 deflist : variant | definition;
 
-argument : left = argument op = SEQ right = argument
-    | left = argument op = SPLIT right = argument
-    | left = argument op = MIX right = argument
+argument : <assoc=right>left = argument op = SEQ right = argument
+    | <assoc=right> left = argument op = (SPLIT|MIX) right = argument
     | left = argument op = REC right = argument
     | expr = infixexpr;
 
@@ -47,10 +46,9 @@ expression : infexpr = infixexpr
     | expr = expression op=WITH LBRAQ defs = withdef RBRAQ
     | expr = expression op=LETREC LBRAQ recs = reclist RBRAQ
     | left = expression op=REC right = expression
-    | left = expression op=PAR right = expression
-    | left = expression op=SEQ right = expression
-    | left = expression op=SPLIT right = expression
-    | left = expression op=MIX right = expression;
+    | <assoc=right> left = expression op=PAR right = expression
+    | <assoc=right> left = expression op=SEQ right = expression
+    | <assoc=right> left = expression op=(SPLIT|MIX) right = expression;
 
 infixexpr
     : prim = primitive
@@ -84,7 +82,7 @@ infixexpr
     | left = infixexpr op = EQ right = infixexpr
     | left = infixexpr op = NE right = infixexpr
 
-    | callee = infixexpr LPAR arguments = arglist RPAR // "function call"
+    | callee = infixexpr LPAR arguments = arglist RPAR
     | left = infixexpr LCROC definitions = deflist* RCROC // EXPLICIT SUBSTITUTION, replacing what in scope with custom definitions
 ;
 
@@ -171,11 +169,12 @@ primitive
     | ffunction
     | fconst
     | fvariable
-    | COMPONENT LPAR uqstring RPAR
-    | LIBRARY LPAR uqstring RPAR
-    | ENVIRONMENT LBRAQ (statement | variant)* RBRAQ
-    | WAVEFORM LBRAQ vallist RBRAQ
-    | ROUTE LPAR argument PAR argument PAR expression RPAR
+
+    | component = COMPONENT LPAR source = uqstring RPAR
+    | library = LIBRARY LPAR source = uqstring RPAR
+    | environment = ENVIRONMENT LBRAQ (statement | variantstatement)* RBRAQ
+    | waveform = WAVEFORM LBRAQ values = vallist RBRAQ
+    | route = ROUTE LPAR ins = argument PAR outs = argument PAR pairs = expression RPAR
 
     | button
     | checkbox
@@ -203,23 +202,24 @@ fconst : FCONSTANT LPAR type name PAR fstring RPAR;
 fvariable : FVARIABLE LPAR type name PAR fstring RPAR;
 
 button : BUTTON LPAR caption = uqstring RPAR;
-checkbox : CHECKBOX LPAR uqstring RPAR;
-vslider : VSLIDER LPAR uqstring PAR argument PAR argument PAR argument PAR argument RPAR;
-hslider : HSLIDER LPAR uqstring PAR argument PAR argument PAR argument PAR argument RPAR;
-nentry : NENTRY LPAR uqstring PAR argument PAR argument PAR argument PAR argument RPAR;
-vgroup : VGROUP LPAR uqstring PAR expression RPAR;
-hgroup : HGROUP LPAR uqstring PAR expression RPAR;
-tgroup : TGROUP LPAR uqstring PAR expression RPAR;
-vbargraph : VBARGRAPH LPAR uqstring PAR argument PAR argument RPAR;
-hbargraph : HBARGRAPH LPAR uqstring PAR argument PAR argument RPAR;
-soundfile : SOUNDFILE LPAR uqstring PAR argument RPAR;
+checkbox : CHECKBOX LPAR caption = uqstring RPAR;
+vslider : VSLIDER LPAR caption = uqstring PAR initial = argument PAR min = argument PAR max = argument PAR step = argument RPAR;
+hslider : HSLIDER LPAR caption = uqstring PAR initial = argument PAR min = argument PAR max = argument PAR step = argument RPAR;
+nentry : NENTRY LPAR caption = uqstring PAR initial = argument PAR min = argument PAR max = argument PAR step = argument RPAR;
+vgroup : VGROUP LPAR caption = uqstring PAR expr = expression RPAR;
+hgroup : HGROUP LPAR caption = uqstring PAR expr = expression RPAR;
+tgroup : TGROUP LPAR caption = uqstring PAR expr = expression RPAR;
+vbargraph : VBARGRAPH LPAR caption = uqstring PAR min = argument PAR max = argument RPAR;
+hbargraph : HBARGRAPH LPAR caption = uqstring PAR min = argument PAR max = argument RPAR;
+soundfile : SOUNDFILE LPAR caption = uqstring PAR outs = argument RPAR;
 
-fpar : IPAR LPAR ident PAR argument PAR expression RPAR;
-fseq : ISEQ LPAR ident PAR argument PAR expression RPAR;
-fsum : ISUM LPAR ident PAR argument PAR expression RPAR;
-fprod : IPROD LPAR ident PAR argument PAR expression RPAR;
-finputs : INPUTS LPAR expression RPAR;
-foutputs : OUTPUTS LPAR expression RPAR;
+fpar : op = IPAR LPAR id = ident PAR arg = argument PAR expr = expression RPAR;
+fseq : op = ISEQ LPAR id = ident PAR arg = argument PAR expr = expression RPAR;
+fsum : op = ISUM LPAR id = ident PAR arg = argument PAR expr = expression RPAR;
+fprod : op = IPROD LPAR id = ident PAR arg = argument PAR expr = expression RPAR;
+
+finputs : INPUTS LPAR expr = expression RPAR;
+foutputs : OUTPUTS LPAR expr = expression RPAR;
 
 caserulelist : caserule | caserulelist caserule;
 caserule : LPAR arglist RPAR ARROW expression ENDDEF;
@@ -227,13 +227,13 @@ caserule : LPAR arglist RPAR ARROW expression ENDDEF;
 ident: identname = IDENT;
 uqstring : STRING;
 fstring : STRING | FSTRING;
-vallist : number | vallist PAR number;
-number : INT
-    | FLOAT
-    | ADD INT
-    | ADD FLOAT
-    | SUB INT
-    | SUB FLOAT;
+vallist : n = number | list = vallist PAR n = number;
+number : n = INT
+    | n = FLOAT
+    | sign = ADD n = INT
+    | sign = ADD n = FLOAT
+    | sign = SUB n = INT
+    | sign = SUB n = FLOAT;
 string : STRING;
 name : IDENT;
 type : INTCAST | FLOATCAST;

@@ -1,176 +1,431 @@
 export interface IPosition {
-  start: {
-    line: number;
-    column: number;
-  },
-  end: {
-    line: number;
-    column: number;
+  line: number;
+  column: number;
+}
+
+export interface ILocation {
+  start: IPosition;
+  end: IPosition
+}
+
+export abstract class BaseNode {
+  public readonly abstract  type: string;
+
+  constructor(public location: ILocation) {
   }
 }
 
-export type ExpressionNode = CompositionExpressionNode | ExpressionStubNode | WithExpressionNode | LetrecExpressionNode | PrimitiveExpressionWrapperNode;
-export type InfixExpressionNode = BinaryExpressionNode | ExpressionStubNode | DelayExpressionNode | ApplicationExpressionNode |  PrimitiveNode | PrimitiveExpressionWrapperNode;
+export class Program extends BaseNode {
+  public readonly type = 'Program';
 
-export type Node = ExpressionNode
-  | InfixExpressionNode
-  | PrimitiveNode
-  | null;
-
-export class BaseNode implements IPosition {
-
+  constructor(public body: (Definition | Import | Declare)[], location: ILocation) {
+    super(location);
+  }
 }
 
-export interface BaseNode extends IPosition {
-  type: string;
+export class Environment extends BaseNode {
+  public readonly type = 'Environment';
+
+  constructor(public body: (Definition | Import | Declare)[], location: ILocation) {
+    super(location);
+  }
 }
 
-export interface ProgramNode extends BaseNode {
-  type: 'ProgramNode';
-  body: {
-    definitions: DefinitionNode[];
-    imports: ImportNode[];
-    declares: DeclareNode[];
-  },
+export class Identifier extends BaseNode {
+  public readonly type = 'Identifier';
+
+  constructor(
+    public name: string,
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface IdentifierNode extends BaseNode {
-  type: 'IdentifierNode',
-  name: string;
+export class Definition extends BaseNode {
+  public readonly type = 'Definition';
+
+  constructor(
+    public id: BaseNode | null,
+    public args: (BaseNode | null)[] | null,
+    public recursive: boolean,
+    public expression: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface DefinitionNode extends BaseNode {
-  type: 'DefinitionNode';
-  id: IdentifierNode; // identifier here
-  args: Node | null;
-  recursive?: boolean;
-  //precision: 'quadprecision' // TODO: Do not forget about variant definitions
-  expr: Node;
+export class PrecisionDeclaration extends BaseNode {
+  public readonly type = 'PrecisionDeclaration';
+
+  constructor(
+    public precision: string,
+    public declaration: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface ImportNode extends BaseNode {
-  type: 'ImportNode';
-  import: string;
+export class FileImport extends BaseNode {
+  public type = 'FileImport';
+
+  constructor(
+    public source: string,
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface DeclareNode extends BaseNode {
-  type: 'DeclareNode';
-  fnName?: string;
-  name: string;
-  value: string;
+export class Import extends FileImport {
+  public readonly type = 'Import';
 }
 
-export interface ExpressionStubNode extends BaseNode {
-  type: 'ExpressionStubNode';
-  text?: string;
+export class Component extends FileImport {
+  public readonly type = 'Component';
 }
 
-export interface VariantStatementNode extends BaseNode {
-  type: 'VariantStatementNode';
-  precision: string;
-  body: ImportNode | DeclareNode | DefinitionNode; // TODO: this one is incorrect
+export class Library extends FileImport {
+  public readonly type = 'Library';
 }
 
-export interface CompositionExpressionNode extends BaseNode {
-  type: 'CompositionExpressionNode';
-  operator: '~' | ',' | ':' | ':>' | '<:' | '+>';
-  left: Node;
-  right: Node;
+export class Declare extends BaseNode {
+  public readonly type = 'Declare';
+
+  constructor(
+    public fnName: string | null,
+    public name: string,
+    public value: string,
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface WithExpressionNode extends BaseNode {
-  type: 'WithExpressionNode';
-  expr: Node;
-  context: DefinitionNode[];
+export class CompositionExpression extends BaseNode {
+  public readonly type = 'CompositionExpression';
+
+  constructor(
+    public operator: '~' | ',' | ':' | ':>' | '<:' | '+>',
+    public left: BaseNode | null,
+    public right: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface LetrecExpressionNode extends BaseNode {
-  type: 'LetrecExpressionNode';
-  expr: Node;
-  context: DefinitionNode[];
+export class WithExpression extends BaseNode {
+  public readonly type = 'WithExpression';
+
+  constructor(
+    public expression: BaseNode | null,
+    public context: Definition[],
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface BinaryExpressionNode extends BaseNode {
-  type: 'BinaryExpressionNode';
-  left: Node;
-  right: Node;
-  operator: string;
+export class LetrecExpression extends BaseNode {
+  public readonly type = 'LetrecExpression';
+
+  constructor(
+    public expression: BaseNode | null,
+    public context: Definition[],
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface DelayExpressionNode extends BaseNode {
-  type: 'DelayExpressionNode';
-  delay: number;
-  expr: Node;
+export class BinaryExpression extends BaseNode {
+  public readonly type = 'BinaryExpression';
+
+  constructor(
+    public operator: string,
+    public left: BaseNode | null,
+    public right: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface ApplicationExpressionNode extends BaseNode {
-  type: 'ApplicationExpressionNode',
-  args: Node,
-  // TODO: Change callee type
-  callee: Node;
+export class ApplicationExpression extends BaseNode {
+  public readonly type = 'ApplicationExpression';
+
+  constructor(
+    public args: (BaseNode | null)[] | null,
+    public callee: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export type PrimitiveNode =
-  PrimitiveStubNode
-  | PrimitiveNumberNode
-  | PrimitiveWireNode
-  | PrimitiveCutNode
-  | PrimitiveTypeNode
-  | PrimitiveIdentifierNode
-  | PrimitiveExpressionWrapperNode
-  | ControlNode
+export abstract class Primitive extends BaseNode {}
 
-;
+export class NumberPrimitive extends Primitive {
+  public readonly type = 'NumberPrimitive';
 
-export interface PrimitiveNumberNode extends BaseNode {
-  type: 'PrimitiveNumberNode';
-  value: number;
+  constructor(
+    public value: number,
+    public location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface PrimitiveStubNode extends BaseNode {
-  type: 'PrimitiveStubNode';
+export class WirePrimitive extends Primitive {
+  public readonly type = 'WirePrimitive';
 }
 
-export interface PrimitiveWireNode extends BaseNode {
-  type: 'PrimitiveWireNode';
+export class CutPrimitive extends Primitive {
+  public readonly type = 'CutPrimitive';
 }
 
-export interface PrimitiveCutNode extends BaseNode {
-  type: 'PrimitiveCutNode';
+export class BroadPrimitive extends Primitive {
+  public readonly type = 'BroadPrimitive';
+
+  constructor(
+    public primitive: string,
+    location: ILocation,
+  ) {
+    super(location);
+  }
 }
 
-export interface PrimitiveTypeNode extends BaseNode {
-  type: 'PrimitiveTypeNode';
-  primitive: string;
+export class UnaryExpression extends BaseNode {
+  public readonly type = 'UnaryExpression';
+
+  constructor(
+    public operator: '-',
+    public argument: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-export interface PrimitiveExpressionWrapperNode extends BaseNode {
-  type: 'PrimitiveExpressionWrapperNode',
-  expr: PrimitiveNode | ExpressionNode | InfixExpressionNode,
+export class PostfixDelayExpression extends BaseNode {
+  public readonly type = 'PostfixDelayExpression';
+
+  constructor(
+    public expression: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
 }
 
-type PrimitiveIdentifierNode = PrimitivePositiveIdentifierNode | PrimitiveNegativeIdentifierNode;
+export abstract class Control extends Primitive {
+  constructor(
+    public label: string,
+    location: ILocation
+  ) {
+    super(location);
 
-export interface PrimitivePositiveIdentifierNode extends BaseNode {
-  type: 'PrimitivePositiveIdentifierNode';
-  id: IdentifierNode
+    // TODO: Parse label metadata here
+  }
+}
+export abstract class InputControl extends Control {}
+export abstract class OutputControl extends Control {}
+
+export class ButtonControl extends InputControl {
+  public readonly type = 'ButtonControl';
 }
 
-export interface PrimitiveNegativeIdentifierNode extends BaseNode {
-  type: 'PrimitiveNegativeIdentifierNode';
-  id: IdentifierNode,
+export class CheckboxControl extends InputControl {
+  public readonly type = 'CheckboxControl';
 }
 
-type ControlNode = InputControlNode | OutputControlNode | ControlErrorNode;
-type InputControlNode = ButtonNode;
-type OutputControlNode = null;
+export class NumericInputControl extends InputControl {
+  public readonly type = 'NumericInputControl';
+  public readonly controlType: string = 'Unknown';
 
-export interface ButtonNode extends BaseNode {
-  type: 'ButtonNode',
-  label: string;
+  constructor(
+    public label: string,
+    public initialValue: BaseNode | null,
+    public min: BaseNode | null,
+    public max: BaseNode | null,
+    public step: BaseNode | null,
+
+    location: ILocation
+  ) {
+    super(label, location);
+  }
 }
 
-export interface ControlErrorNode {
-  type: 'ControlErrorNode'
-  error: string;
+export class GroupControl extends Control {
+  public readonly type = 'GroupControl';
+  public readonly groupType: string = 'unknown';
+
+  constructor(
+    public label: string,
+    public content: BaseNode | null,
+    location: ILocation
+  ) {
+    super(label, location);
+  }
 }
+
+export class VGroupControl extends GroupControl {
+  public readonly groupType = 'vgroup';
+}
+
+export class HGroupControl extends GroupControl {
+  public readonly groupType = 'hgroup';
+}
+
+export class TGroupControl extends GroupControl {
+  public readonly groupType = 'tgroup';
+}
+
+export class VsliderControl extends NumericInputControl {
+  public readonly controlType = 'vslider';
+}
+
+export class HsliderControl extends NumericInputControl {
+  public readonly controlType = 'hslider';
+}
+
+export class NentryControl extends NumericInputControl {
+  public readonly controlType = 'nentry';
+}
+
+export class BargraphControl extends OutputControl {
+  public readonly type = 'BargraphControl';
+  public readonly controlType: string = 'unknown';
+
+  constructor(
+    public label: string,
+    public min: BaseNode | null,
+    public max: BaseNode | null,
+    location: ILocation
+  ) {
+    super(label, location);
+  }
+}
+
+export class VbargraphControl extends BargraphControl {
+  public readonly controlType = 'vbargraph';
+}
+
+export class HbargraphControl extends BargraphControl {
+  public readonly controlType = 'vbargraph';
+}
+
+export class Soundfile extends BaseNode {
+  public readonly type = 'Soundfile';
+
+  constructor(
+    public label: string,
+    public outs: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class IterativeExpression extends BaseNode {
+  public readonly type = 'IterativeExpression';
+  public readonly operator: string = 'unknown';
+
+  constructor(
+    public counter: BaseNode | null,
+    public iterations: BaseNode | null,
+    public expression: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class ParIteration extends IterativeExpression {
+  public readonly operator = 'par';
+}
+
+export class SumIteration extends IterativeExpression {
+  public readonly operator = 'sum';
+}
+
+export class SeqIteration extends IterativeExpression {
+  public readonly operator = 'seq';
+}
+
+export class ProdIteration extends IterativeExpression {
+  public readonly operator = 'prod';
+}
+
+export class AccessExpression extends BaseNode {
+  public readonly type = 'AccessExpression';
+
+  constructor(
+    public environment: BaseNode | null,
+    public property: BaseNode | null,
+    location: ILocation,
+  ) {
+    super(location);
+  }
+}
+
+export class InputsCall extends BaseNode {
+  public readonly type = 'InputsCall';
+
+  constructor(
+    public expression: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class OutputsCall extends BaseNode {
+  public readonly type = 'OutputsCall';
+
+  constructor(
+    public expression: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class Waveform extends BaseNode {
+  public readonly type = 'Waveform';
+
+  constructor(
+    public values: (number | null)[] | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class Route extends BaseNode {
+  public readonly type = "Route";
+
+  constructor(
+    public ins: BaseNode | null,
+    public outs: BaseNode | null,
+    public pairs: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class StubNode extends BaseNode {
+  public readonly type = 'STUB_NODE';
+
+  constructor(
+    public text: string,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+

@@ -1,31 +1,86 @@
 import FaustParserVisitor from "./generated/FaustParserVisitor.js";
 import {
-  ArglistContext, ArgumentContext, ButtonContext,
-  DefinitionContext, DefnameContext, ExpressionContext, IdentContext,
+  ArglistContext,
+  ArgumentContext,
+  ButtonContext,
+  CheckboxContext,
+  DefinitionContext,
+  DefnameContext,
+  ExpressionContext, FinputsContext, FoutputsContext,
+  FparContext,
+  FprodContext,
+  FseqContext,
+  FsumContext,
+  HbargraphContext,
+  HgroupContext,
+  HsliderContext,
+  IdentContext,
   ImportStatementContext,
-  InfixexprContext, PrimitiveContext, ProgramContext, RecinitionContext, ReclistContext, RecnameContext,
-  StatementContext, UqstringContext,
-  VariantContext, VariantstatementContext, WithdefContext
+  InfixexprContext,
+  NameContext,
+  NentryContext, NumberContext,
+  PrimitiveContext,
+  ProgramContext,
+  RecinitionContext,
+  ReclistContext,
+  RecnameContext,
+  SoundfileContext,
+  StatementContext,
+  StringContext,
+  TgroupContext,
+  UqstringContext,
+  VallistContext,
+  VariantContext,
+  VariantstatementContext,
+  VbargraphContext,
+  VgroupContext,
+  VsliderContext,
+  WithdefContext
 } from "./generated/FaustParser.js";
 import {
-  DeclareNode,
-  DefinitionNode,
-  CompositionExpressionNode,
-  ImportNode,
-  IPosition,
-  ProgramNode,
-  VariantStatementNode,
-  WithExpressionNode,
-  LetrecExpressionNode,
-  ExpressionStubNode,
-  BinaryExpressionNode,
-  ExpressionNode,
-  PrimitiveNumberNode,
-  PrimitiveStubNode,
-  PrimitiveNode,
-  IdentifierNode,
-  ApplicationExpressionNode, InfixExpressionNode, ButtonNode, ControlErrorNode, PrimitiveExpressionWrapperNode, Node
-} from "./ast/nodes.interface";
+  ILocation,
+  Definition,
+  Program,
+  Declare,
+  Import,
+  Identifier,
+  BaseNode,
+  CompositionExpression,
+  WithExpression,
+  LetrecExpression,
+  BinaryExpression,
+  StubNode,
+  ApplicationExpression,
+  NumberPrimitive,
+  WirePrimitive,
+  CutPrimitive,
+  BroadPrimitive,
+  UnaryExpression,
+  ButtonControl,
+  PrecisionDeclaration,
+  CheckboxControl,
+  VsliderControl,
+  HsliderControl,
+  NentryControl,
+  VGroupControl,
+  HGroupControl,
+  TGroupControl,
+  VbargraphControl,
+  HbargraphControl,
+  Soundfile,
+  ParIteration,
+  SumIteration,
+  SeqIteration,
+  ProdIteration,
+  AccessExpression,
+  OutputsCall,
+  InputsCall,
+  PostfixDelayExpression,
+  Component,
+  Library,
+  Environment,
+  Waveform, Route
+} from "./ast/nodes.interface.js";
 
 const EOF = "<EOF>";
 
@@ -36,21 +91,15 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
   // Visit a parse tree produced by FaustParser#program.
-  visitProgram(ctx: ProgramContext): ProgramNode {
+  visitProgram(ctx: ProgramContext): Program {
     // Do not forget, that program might contain variantstatements as well
 
-    const statements: (DefinitionNode | ImportNode | DeclareNode)[] = this.visitChildren(ctx)
-      .filter((s: DefinitionNode | ImportNode | DeclareNode | string) => s !== EOF);
+    const body: (Definition | Import | Declare)[] = (this.visitChildren(ctx) as (Definition | Import | Declare | string)[])
+      .filter(s => s !== EOF) as unknown as (Definition | Import | Declare)[];
 
-    return {
-      type: 'ProgramNode',
-      body: {
-        definitions: statements.filter(s => s.type === "DefinitionNode") as DefinitionNode[],
-        imports: statements.filter(s => s.type === "ImportNode") as ImportNode[],
-        declares: statements.filter(s => s.type === "DeclareNode") as DeclareNode[]
-      },
-      ...this.getPosition(ctx)
-    };
+    const location = this.getLocation(ctx);
+
+    return new Program(body, location);
   }
 
 
@@ -60,64 +109,47 @@ export class FaustVisitor extends FaustParserVisitor {
     return "stub";
   }
 
-
-  visitImportStatement(ctx: ImportStatementContext) {
-    // implemented
-    return this.visitUqstring(ctx.importName);
+  visitImportStatement(ctx: ImportStatementContext): Import {
+    const filename = this.visitUqstring(ctx.importName);
+    return new Import(filename, this.getLocation(ctx));
   }
 
+  visitStatement(ctx: StatementContext): Definition | Import | Declare | null {
 
-  visitStatement(ctx: StatementContext): DefinitionNode | ImportNode | DeclareNode {
-
-    if (ctx.def) {
-      const definition = this.visitDefinition(ctx.def);
-      return {
-        type: 'DefinitionNode',
-        id: definition.id,
-        expr: definition.expr,
-        args: definition.args,
-        ...this.getPosition(ctx)
-      }
+    if (ctx.def instanceof DefinitionContext) {
+      return this.visitDefinition(ctx.def);
     }
 
-    if (ctx.imp) {
-      return {
-        type: 'ImportNode',
-        import: this.visitImportStatement(ctx.imp),
-        ...this.getPosition(ctx)
-      }
+    if (ctx.imp instanceof ImportStatementContext) {
+      return this.visitImportStatement(ctx.imp)
     }
 
-    if (ctx.decname) {
-      return {
-        type: 'DeclareNode',
-        name: ctx.decname,
-        fnName: ctx.decarg,
-        value: ctx.decval,
-        ...this.getPosition(ctx)
-      }
+    if (
+      ctx.decname instanceof NameContext
+      && ctx.decval instanceof StringContext
+    ) {
+      const name = this.visitName(ctx.decname);
+      const fnName = ctx.decarg ?
+        this.visitName(ctx.decarg)
+        : null;
+      const value = this.visitString(ctx.decval);
+
+      return new Declare(fnName, name, value, this.getLocation(ctx));
     }
 
     throw new Error('Statement is neither DefinitionNode | ImportNode | DeclareNode');
   }
 
 
-  // Visit a parse tree produced by FaustParser#variantstatement.
-  visitVariantstatement(ctx: VariantstatementContext): VariantStatementNode {
-
+  visitVariantstatement(ctx: VariantstatementContext): PrecisionDeclaration {
     const precision = this.visitVariant(ctx.precision);
-    const variantStatement = this.visitStatement(ctx.variantStatement);
+    const declaration = this.visitStatement(ctx.variantStatement);
 
-    return {
-      type: 'VariantStatementNode',
-      precision,
-      body: variantStatement,
-      ...this.getPosition(ctx)
-    }
+    return new PrecisionDeclaration(precision, declaration, this.getLocation(ctx));
   }
 
   // Visit a parse tree produced by FaustParser#definition.
-  visitDefinition(ctx: DefinitionContext): DefinitionNode {
+  visitDefinition(ctx: DefinitionContext): Definition | null {
 
     const args = ctx.args
       ? this.visitArglist(ctx.args)
@@ -125,69 +157,62 @@ export class FaustVisitor extends FaustParserVisitor {
 
     // TODO: with some errors ctx.identname can be empty. Error case: "a 1 + 1"
 
-    return {
-      type: 'DefinitionNode',
-      args,
-      id: this.visitIdent(ctx.identname),
-      expr: this.visitExpression(ctx.expr),
-      ...this.getPosition(ctx)
+    if (ctx.identname && ctx.expr) {
+      const id = this.visitDefname(ctx.identname);
+      const expression = this.visitExpression(ctx.expr);
+
+      return new Definition(id, args, false, expression, this.getLocation(ctx));
     }
 
-    // return this.visitChildren(ctx);
+    console.log("ERROR Parsing Definition");
+
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#defname.
-  visitDefname(ctx: DefnameContext) {
-    console.log('VisitDefName not implemented');
-    return this.visitChildren(ctx);
+  visitDefname(ctx: DefnameContext): BaseNode | null {
+    return this.visitIdent(ctx.ident());
   }
 
-
-  // Visit a parse tree produced by FaustParser#arglist.
-  visitArglist(ctx: ArglistContext): Node {
+  visitArglist(ctx: ArglistContext): (BaseNode | null)[] {
     if (ctx.list && ctx.op && ctx.arg) {
-      return {
-        type: "CompositionExpressionNode",
-        operator: ctx.op.text,
-        left: this.visitArglist(ctx.list),
-        right: this.visitArgument(ctx.arg),
-        ...this.getPosition(ctx)
-      }
+      const list = this.visitArglist(ctx.list);
+      const arg = this.visitArgument(ctx.arg);
+
+      return [...list, arg];
     }
 
     if (ctx.arg) {
-      return this.visitArgument(ctx.arg);
+      return [this.visitArgument(ctx.arg)];
     }
 
-    console.log();
+    console.log("Error parsing args");
 
-    return {
-      type: "ExpressionStubNode",
-      ...this.getPosition(ctx)
-    }
+    return [null];
   }
 
 
-  visitReclist(ctx: ReclistContext): DefinitionNode[] {
+  visitReclist(ctx: ReclistContext): Definition[] {
     // Implemented
     return this.visitChildren(ctx);
   }
 
-  visitRecinition(ctx: RecinitionContext): DefinitionNode {
-    return {
-      type: 'DefinitionNode',
-      recursive: true,
-      args: null,
-      id: this.visitRecname(ctx.identname),
-      expr: this.visitExpression(ctx.expr),
-      ...this.getPosition(ctx)
+  visitRecinition(ctx: RecinitionContext): Definition | null {
+    if (ctx.identname && ctx.expr) {
+      const id = this.visitRecname(ctx.identname);
+      const expression = this.visitExpression(ctx.expr);
+
+      return new Definition(id, null, true, expression, this.getLocation(ctx));
     }
+
+    console.log("Error: Recinition. Return null");
+
+    return null;
   }
 
 
-  visitRecname(ctx: RecnameContext): IdentifierNode {
-    // Implemented
+  visitRecname(ctx: RecnameContext): Identifier {
     return this.visitIdent(ctx.identname);
   }
 
@@ -198,28 +223,22 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
 
-  visitArgument(ctx: ArgumentContext): Node {
-
+  visitArgument(ctx: ArgumentContext): BaseNode | null {
     if (ctx.op && ctx.left && ctx.right) {
-      return {
-        type: "CompositionExpressionNode",
-        operator: ctx.op.text,
-        left: this.visitArglist(ctx.left),
-        right: this.visitArglist(ctx.right),
-        ...this.getPosition(ctx)
-      }
+      const operator = ctx.op.text;
+      const left = this.visitArgument(ctx.left);
+      const right = this.visitArgument(ctx.right)
+
+      return new CompositionExpression(operator, left, right, this.getLocation(ctx));
     }
 
     if (ctx.expr) {
-      return this.visitInfixexpr(ctx.expr)
+      return this.visitInfixexpr(ctx.expr);
     }
 
     console.log("ARGUMENT ERROR: returning stub node");
 
-    return {
-      type: "ExpressionStubNode",
-      ...this.getPosition(ctx)
-    }
+    return null;
   }
 
 
@@ -231,150 +250,142 @@ export class FaustVisitor extends FaustParserVisitor {
 
 
   // Visit a parse tree produced by FaustParser#expression.
-  visitExpression(ctx: ExpressionContext): ExpressionNode | InfixExpressionNode {
+  visitExpression(ctx: ExpressionContext): BaseNode | null {
 
     if (ctx.infexpr) {
       return this.visitInfixexpr(ctx.infexpr);
     }
 
-    if (ctx.op.text === 'with') {
-      return {
-        type: "WithExpressionNode",
-        expr: this.visitExpression(ctx.expr),
-        context: ctx.defs.getChildCount() === 0 ? [] : this.visitWithdef(ctx.defs),
-        ...this.getPosition(ctx)
-      }
+    if (ctx.expr && ctx.op.text === 'with') {
+
+      const expression = this.visitExpression(ctx.expr);
+      const context = ctx.defs.getChildCount() === 0
+        ? []
+        : this.visitWithdef(ctx.defs);
+
+      return new WithExpression(
+        expression,
+        context,
+        this.getLocation(ctx)
+      )
     }
 
-    if (ctx.op.text === 'letrec') {
-      return {
-        type: "LetrecExpressionNode",
-        expr: this.visitExpression(ctx.expr),
-        context: ctx.recs.getChildCount() === 0 ? [] : this.visitReclist(ctx.recs),
-        ...this.getPosition(ctx)
-      }
+    if (ctx.expr && ctx.op.text === 'letrec') {
+      const expression = this.visitExpression(ctx.expr);
+      const context = ctx.recs.getChildCount() === 0
+        ? []
+        : this.visitReclist(ctx.recs);
+
+      return new LetrecExpression(expression, context, this.getLocation(ctx));
     }
 
-    if (ctx.right) {
-      // CompositionExpression
+    if (ctx.op && ctx.right) {
+      const operator = ctx.op.text;
+      const left = this.visitExpression(ctx.left);
+      const right = this.visitExpression(ctx.right);
 
-      return {
-        type: "CompositionExpressionNode",
-        operator: ctx.op.text,
-        left: this.visitExpression(ctx.left),
-        right: this.visitExpression(ctx.right),
-        ...this.getPosition(ctx)
-      }
+      return new CompositionExpression(operator, left, right, this.getLocation(ctx));
     }
 
     console.log("EXPRESSION ERROR, returning stub");
 
-    return {
-      type: 'ExpressionStubNode',
-      ...this.getPosition(ctx)
-    }
+    return null;
   }
 
-  visitWithdef(ctx: WithdefContext): DefinitionNode[] {
+  visitWithdef(ctx: WithdefContext): Definition[] {
     // implemented
-    // Valid, since withdef is an alias for (definition | variangdefinition)*
+    // Valid, since withdef is an alias for (definition | variantdefinition)*
     return this.visitChildren(ctx);
   }
 
-  visitInfixexpr(ctx: InfixexprContext): InfixExpressionNode | PrimitiveExpressionWrapperNode | PrimitiveNode | ExpressionNode {
-    if (ctx.right) {
-      // BinaryExpressionNode
-
-      return {
-        type: 'BinaryExpressionNode',
-        operator: ctx.op.text,
-        left: this.visitInfixexpr(ctx.left),
-        right: this.visitInfixexpr(ctx.right),
-        ...this.getPosition(ctx)
-      }
+  visitInfixexpr(ctx: InfixexprContext): BaseNode | null {
+    if (ctx.definitions) {
+      return new StubNode(
+        'Substitution stub',
+        this.getLocation(ctx)
+      );
     }
 
-    if (ctx.definitions || ctx.expr) {
-      return {
-        type: 'ExpressionStubNode',
-        text: '[STUB] InfixExpr function, substitution and delay stub',
-        ...this.getPosition(ctx)
+    if (ctx.op && ctx.expr) {
+      const operator = ctx.op.text;
+
+      if (operator === "'") {
+        return new PostfixDelayExpression(
+          this.visitInfixexpr(ctx.expr),
+          this.getLocation(ctx)
+        );
       }
+
+      console.log('ERROR: Unrecognized postfix expression');
+      return null;
+    }
+
+    if (ctx.op && ctx.left && ctx.right) {
+      const operator = ctx.op.text;
+      const left = this.visitInfixexpr(ctx.left);
+      const right = this.visitInfixexpr(ctx.right);
+
+      return new BinaryExpression(operator, left, right, this.getLocation(ctx));
     }
 
     if (ctx.prim) {
-        return this.visitPrimitive(ctx.prim);
+      return this.visitPrimitive(ctx.prim);
     }
 
-    if (ctx.arguments) {
+    if (ctx.callee && ctx.arguments) {
       const args = ctx.arguments
         ? this.visitArglist(ctx.arguments)
         : null;
 
-      return {
-        type: "ApplicationExpressionNode",
-        args,
-        callee: this.visitInfixexpr(ctx.callee),
-        ...this.getPosition(ctx)
-      }
+      const callee = this.visitInfixexpr(ctx.callee)
+
+      return new ApplicationExpression(args, callee, this.getLocation(ctx));
     }
 
-    console.log("INFIX EXPRESSION ERROR, returning stub");
-
-    return {
-      type: 'ExpressionStubNode',
-      ...this.getPosition(ctx)
+    if (ctx.left && ctx.identificator) {
+      return new AccessExpression(
+        this.visitInfixexpr(ctx.left),
+        this.visitIdent(ctx.identificator),
+        this.getLocation(ctx)
+      )
     }
+
+    console.log("INFIX EXPRESSION ERROR");
+
+    return null;
   }
 
 
-  visitPrimitive(ctx: PrimitiveContext): PrimitiveNode | ExpressionNode | null {
+  visitPrimitive(ctx: PrimitiveContext): BaseNode | null {
     if (ctx.value) {
-      return {
-        type: "PrimitiveNumberNode",
-        value: parseFloat((ctx.sign?.text || '') + ctx.value.text),
-        ...this.getPosition(ctx)
-      }
+      const sign = ctx.sign?.text || '';
+      const value = parseFloat(`${sign}${ctx.value.text}`);
+
+      return new NumberPrimitive(value, this.getLocation(ctx));
     }
 
     if (ctx.wire) {
-      return {
-        type: "PrimitiveWireNode",
-        ...this.getPosition(ctx)
-      }
+      return new WirePrimitive(this.getLocation(ctx));
     }
 
     if (ctx.cut) {
-      return {
-        type: "PrimitiveCutNode",
-        ...this.getPosition(ctx)
-      }
+      return new CutPrimitive(this.getLocation(ctx));
     }
 
     if (ctx.primitivetype) {
-      return {
-        type: "PrimitiveTypeNode",
-        primitive: ctx.primitivetype,
-        ...this.getPosition(ctx)
-      }
+      const primitivetype = ctx.primitivetype.text;
+      return new BroadPrimitive(primitivetype, this.getLocation(ctx));
     }
 
     if (ctx.primitiveident) {
+      const identificator = this.visitIdent(ctx.primitiveident);
+
       if (ctx.sign) {
-        return {
-          type: "PrimitiveNegativeIdentifierNode",
-          id: this.visitIdent(ctx.primitiveident),
-          ...this.getPosition(ctx)
-        }
+        return new UnaryExpression("-", identificator, this.getLocation(ctx));
       }
 
-      return {
-        type: "PrimitivePositiveIdentifierNode",
-        id: this.visitIdent(ctx.primitiveident),
-        ...this.getPosition(ctx)
-      }
+      return identificator;
     }
-
 
     const firstChild = ctx.getChild(0);
 
@@ -382,20 +393,120 @@ export class FaustVisitor extends FaustParserVisitor {
       return this.visitButton(firstChild);
     }
 
+    if (firstChild instanceof CheckboxContext) {
+      return this.visitCheckbox(firstChild);
+    }
+
+    if (firstChild instanceof NentryContext) {
+      return this.visitNentry(firstChild);
+    }
+
+    if (firstChild instanceof VsliderContext) {
+      return this.visitVslider(firstChild);
+    }
+
+    if (firstChild instanceof HsliderContext) {
+      return this.visitHslider(firstChild);
+    }
+
+    if (firstChild instanceof VgroupContext) {
+      return this.visitVgroup(firstChild);
+    }
+
+    if (firstChild instanceof HgroupContext) {
+      return this.visitHgroup(firstChild);
+    }
+
+    if (firstChild instanceof TgroupContext) {
+      return this.visitTgroup(firstChild);
+    }
+
+    if (firstChild instanceof VbargraphContext) {
+      return this.visitVbargraph(firstChild);
+    }
+
+    if (firstChild instanceof HbargraphContext) {
+      return this.visitHbargraph(firstChild);
+    }
+
+    if (firstChild instanceof FsumContext) {
+      return this.visitFsum(firstChild);
+    }
+
+    if (firstChild instanceof FseqContext) {
+      return this.visitFseq(firstChild);
+    }
+
+    if (firstChild instanceof FparContext) {
+      return this.visitFpar(firstChild);
+    }
+
+    if (firstChild instanceof FprodContext) {
+      return this.visitFprod(firstChild);
+    }
+
+    if (firstChild instanceof FinputsContext) {
+      return this.visitFinputs(firstChild);
+    }
+
+    if (firstChild instanceof FoutputsContext) {
+      return this.visitFoutputs(firstChild);
+    }
+
     if (ctx.primitiveexpr) {
-      return {
-        type: "PrimitiveExpressionWrapperNode",
-        expr: this.visitExpression(ctx.primitiveexpr),
-        ...this.getPosition(ctx)
-      };
+      return this.visitExpression(ctx.primitiveexpr);
     }
 
-    console.log("ERROR: primitive not found, returning stub node");
+    if (ctx.source) {
+      if (ctx.component) {
+        return new Component(
+          this.visitUqstring(ctx.source),
+          this.getLocation(ctx)
+        );
+      }
 
-    return {
-      type: "PrimitiveStubNode",
-      ...this.getPosition(ctx)
+      if (ctx.library) {
+        return new Library(
+          this.visitUqstring(ctx.source),
+          this.getLocation(ctx)
+        );
+      }
+
+      console.log('ERROR: parsing component or library');
+
+      return null;
     }
+
+    if (ctx.waveform && ctx.values) {
+      return new Waveform(
+        this.visitVallist(ctx.values),
+        this.getLocation(ctx)
+      )
+    }
+
+    if (ctx.route && ctx.ins && ctx.outs && ctx.pairs) {
+      return new Route(
+        this.visitArgument(ctx.ins),
+        this.visitArgument(ctx.outs),
+        this.visitExpression(ctx.pairs),
+        this.getLocation(ctx)
+      );
+    }
+
+    if (ctx.environment) {
+
+      const environmentBody: (Definition | Import | Declare)[] = (this.visitChildren(ctx) as (Definition | Import | Declare | string)[])
+        .filter(s => s !== EOF) as unknown as (Definition | Import | Declare)[];
+
+      return new Environment(
+        environmentBody,
+        this.getLocation(ctx)
+      );
+    }
+
+    console.log("ERROR: primitive not found, returning null");
+
+    return null;
 
   }
 
@@ -421,135 +532,258 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
 
-  // Visit a parse tree produced by FaustParser#button.
-  visitButton(ctx: ButtonContext): ButtonNode | ControlErrorNode {
-
+  visitButton(ctx: ButtonContext): BaseNode | null {
     if (ctx.caption) {
-      return {
-        type: "ButtonNode",
-        label: this.visitUqstring(ctx.caption),
-        ...this.getPosition(ctx)
-      }
+      const label = this.visitUqstring(ctx.caption);
+      return new ButtonControl(label, this.getLocation(ctx));
     }
 
     console.log('ERROR: Parse button failed');
 
-    return {
-      type: 'ControlErrorNode',
-      error: 'Button error',
-    }
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#checkbox.
-  visitCheckbox(ctx: any) {
-    console.log("visitCheckbox: not implemented");
-    return this.visitChildren(ctx);
+  visitCheckbox(ctx: CheckboxContext): BaseNode | null {
+    if (ctx.caption) {
+      const label = this.visitUqstring(ctx.caption);
+      return new CheckboxControl(label, this.getLocation(ctx));
+    }
+
+    console.log('ERROR: Parse checkbox failed');
+    return null;
   }
 
 
-  // Visit a parse tree produced by FaustParser#vslider.
-  visitVslider(ctx: any) {
-    console.log("visitVslider: not implemented");
-    return this.visitChildren(ctx);
+  visitVslider(ctx: VsliderContext): BaseNode | null {
+    if (ctx.caption && ctx.initial && ctx.min && ctx.max && ctx.step) {
+      return new VsliderControl(
+        this.visitUqstring(ctx.caption),
+        this.visitArgument(ctx.initial),
+        this.visitArgument(ctx.min),
+        this.visitArgument(ctx.max),
+        this.visitArgument(ctx.step),
+        this.getLocation(ctx)
+      )
+    }
+
+    console.log('ERROR: Parse Vslider failed');
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#hslider.
-  visitHslider(ctx: any) {
-    console.log("visitHslider: not implemented");
-    return this.visitChildren(ctx);
+  visitHslider(ctx: HsliderContext): BaseNode | null {
+    if (ctx.caption && ctx.initial && ctx.min && ctx.max && ctx.step) {
+      return new HsliderControl(
+        this.visitUqstring(ctx.caption),
+        this.visitArgument(ctx.initial),
+        this.visitArgument(ctx.min),
+        this.visitArgument(ctx.max),
+        this.visitArgument(ctx.step),
+        this.getLocation(ctx)
+      )
+    }
+
+    console.log('ERROR: Parse Vslider failed');
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#nentry.
   visitNentry(ctx: any) {
-    console.log("visitNentry: not implemented");
-    return this.visitChildren(ctx);
+    if (ctx.caption && ctx.initial && ctx.min && ctx.max && ctx.step) {
+      return new NentryControl(
+        this.visitUqstring(ctx.caption),
+        this.visitArgument(ctx.initial),
+        this.visitArgument(ctx.min),
+        this.visitArgument(ctx.max),
+        this.visitArgument(ctx.step),
+        this.getLocation(ctx)
+      )
+    }
+
+    console.log('ERROR: Parse Vslider failed');
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#vgroup.
-  visitVgroup(ctx: any) {
-    console.log("visitVgroup: not implemented");
-    return this.visitChildren(ctx);
+  visitVgroup(ctx: VgroupContext) {
+    if (ctx.caption && ctx.expr) {
+      return new VGroupControl(
+        this.visitUqstring(ctx.caption),
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      );
+    }
+
+    console.log('ERROR: Building AST for vgroup');
+
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#hgroup.
-  visitHgroup(ctx: any) {
-    console.log("visitHgroup: not implemented");
-    return this.visitChildren(ctx);
+  visitHgroup(ctx: HgroupContext) {
+    if (ctx.caption && ctx.expr) {
+      return new HGroupControl(
+        this.visitUqstring(ctx.caption),
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      );
+    }
+
+    console.log('ERROR: Building AST for hgroup');
+
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#tgroup.
-  visitTgroup(ctx: any) {
-    console.log("visitTgroup: not implemented");
-    return this.visitChildren(ctx);
+  visitTgroup(ctx: TgroupContext) {
+    if (ctx.caption && ctx.expr) {
+      return new TGroupControl(
+        this.visitUqstring(ctx.caption),
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      );
+    }
+
+    console.log('ERROR: Building AST for tgroup');
+
+    return null;
   }
 
 
-  // Visit a parse tree produced by FaustParser#vbargraph.
-  visitVbargraph(ctx: any) {
-    console.log("visitVbargraph: not implemented");
-    return this.visitChildren(ctx);
+  visitVbargraph(ctx: VbargraphContext) {
+
+    if (ctx.caption && ctx.min && ctx.max) {
+      return new VbargraphControl(
+        this.visitUqstring(ctx.caption),
+        this.visitArgument(ctx.min),
+        this.visitArgument(ctx.max),
+        this.getLocation(ctx)
+      )
+    }
+
+    console.log('ERROR parsing vbargraph');
+    return null;
   }
 
 
-  // Visit a parse tree produced by FaustParser#hbargraph.
-  visitHbargraph(ctx: any) {
-    console.log("visitHbargraph: not implemented");
-    return this.visitChildren(ctx);
+  visitHbargraph(ctx: HbargraphContext) {
+
+    if (ctx.caption && ctx.min && ctx.max) {
+      return new HbargraphControl(
+        this.visitUqstring(ctx.caption),
+        this.visitArgument(ctx.min),
+        this.visitArgument(ctx.max),
+        this.getLocation(ctx)
+      )
+    }
+
+    console.log('ERROR parsing hbargraph');
+    return null;
   }
 
 
-  // Visit a parse tree produced by FaustParser#soundfile.
-  visitSoundfile(ctx: any) {
-    console.log("visitSoundfile: not implemented");
-    return this.visitChildren(ctx);
+  visitSoundfile(ctx: SoundfileContext) {
+    if (ctx.caption && ctx.outs) {
+      return new Soundfile(
+        this.visitUqstring(ctx.caption),
+        this.visitArgument(ctx.outs),
+        this.getLocation(ctx)
+      );
+    }
+
+    console.log("ERROR: Parsing soundfile");
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#fpar.
-  visitFpar(ctx: any) {
-    console.log("visitFpar: not implemented");
-    return this.visitChildren(ctx);
+  visitFpar(ctx: FparContext) {
+    if (ctx.id && ctx.arg && ctx.expr) {
+      return new ParIteration(
+        this.visitIdent(ctx.id),
+        this.visitArgument(ctx.arg),
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      );
+    }
+
+    console.log('ERROR: visitFpar');
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#fseq.
-  visitFseq(ctx: any) {
-    console.log("visitFseq: not implemented");
-    return this.visitChildren(ctx);
+  visitFseq(ctx: FseqContext) {
+    if (ctx.id && ctx.arg && ctx.expr) {
+      return new SeqIteration(
+        this.visitIdent(ctx.id),
+        this.visitArgument(ctx.arg),
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      );
+    }
+
+    console.log('ERROR: visitFseq');
+    return null;
+  }
+
+  visitFsum(ctx: FsumContext) {
+    if (ctx.id && ctx.arg && ctx.expr) {
+      return new SumIteration(
+        this.visitIdent(ctx.id),
+        this.visitArgument(ctx.arg),
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      );
+    }
+
+    console.log('ERROR: visitFsum');
+    return null;
+  }
+
+  visitFprod(ctx: FprodContext) {
+    if (ctx.id && ctx.arg && ctx.expr) {
+      return new ProdIteration(
+        this.visitIdent(ctx.id),
+        this.visitArgument(ctx.arg),
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      );
+    }
+
+    console.log('ERROR: visitFprod');
+    return null;
   }
 
 
-  // Visit a parse tree produced by FaustParser#fsum.
-  visitFsum(ctx: any) {
-    console.log("visitFsum: not implemented");
-    return this.visitChildren(ctx);
+  visitFinputs(ctx: FinputsContext) {
+    if (ctx.expr) {
+      return new OutputsCall(
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      )
+    }
+
+    return null;
   }
 
 
-  // Visit a parse tree produced by FaustParser#fprod.
-  visitFprod(ctx: any) {
-    console.log("visitProd: not implemented");
-    return this.visitChildren(ctx);
-  }
+  visitFoutputs(ctx: FoutputsContext) {
+    if (ctx.expr) {
+      return new InputsCall(
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      )
+    }
 
-
-  // Visit a parse tree produced by FaustParser#finputs.
-  visitFinputs(ctx: any) {
-    console.log("visitFinputs: not implemented");
-    return this.visitChildren(ctx);
-  }
-
-
-  // Visit a parse tree produced by FaustParser#foutputs.
-  visitFoutputs(ctx: any) {
-    console.log("visitFoutputs: not implemented");
-    return this.visitChildren(ctx);
+    return null;
   }
 
 
@@ -567,24 +801,15 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
 
-  // Visit a parse tree produced by FaustParser#ident.
-  visitIdent(ctx: IdentContext): IdentifierNode {
-    if (!ctx) {
-      console.log("IDENTIFIER ERROR");
-    }
-    return {
-      type: "IdentifierNode",
-      name: ctx.getText(),
-      ...this.getPosition(ctx)
-    };
+  visitIdent(ctx: IdentContext): Identifier {
+    return new Identifier(ctx.getText(), this.getLocation(ctx));
   }
-
 
   // Visit a parse tree produced by FaustParser#uqstring.
   visitUqstring(ctx: UqstringContext): string {
-    return ctx.getText();
+    const string = ctx.getText();
+    return string.slice(1, string.length - 1);
   }
-
 
   // Visit a parse tree produced by FaustParser#fstring.
   visitFstring(ctx: any) {
@@ -594,30 +819,52 @@ export class FaustVisitor extends FaustParserVisitor {
 
 
   // Visit a parse tree produced by FaustParser#vallist.
-  visitVallist(ctx: any) {
-    console.log("visitVallist: not implemented");
-    return this.visitChildren(ctx);
+  visitVallist(ctx: VallistContext): (number | null)[] | null {
+
+    if (ctx.list && ctx.n) {
+
+      const rest = this.visitVallist(ctx.list);
+      if (!rest) {
+        console.log("ERROR: Can't parse vallist");
+        return null;
+      }
+
+      return [...rest, this.visitNumber(ctx.n)];
+    }
+
+    if (ctx.n) {
+      return [this.visitNumber(ctx.n)];
+    }
+
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#number.
-  visitNumber(ctx: any) {
-    console.log("visitNumber: not implemented");
-    return this.visitChildren(ctx);
+  visitNumber(ctx: NumberContext): number | null {
+    if (ctx.sign && ctx.n) {
+      const sign = ctx.sign?.text || '';
+      const value = parseFloat(`${sign}${ctx.n.text}`);
+
+      return value;
+    }
+
+    if (ctx.n) {
+      return parseFloat(ctx.n.text);
+    }
+
+    return null;
   }
 
 
   // Visit a parse tree produced by FaustParser#string.
-  visitString(ctx: any) {
-    console.log("visitString: not implemented");
-    return this.visitChildren(ctx);
+  visitString(ctx: StringContext) {
+    return ctx.STRING().text;
   }
 
 
-  // Visit a parse tree produced by FaustParser#name.
-  visitName(ctx: any) {
-    console.log("visitName: not implemented");
-    return this.visitChildren(ctx);
+  visitName(ctx: NameContext) {
+    return ctx.IDENT().text;
   }
 
 
@@ -678,7 +925,7 @@ export class FaustVisitor extends FaustParserVisitor {
     return super.visitChildren(ctx);
   }
 
-  private getPosition(ctx: any): IPosition {
+  private getLocation(ctx: any): ILocation {
     return {
       start: {
         line: ctx.start.line,
