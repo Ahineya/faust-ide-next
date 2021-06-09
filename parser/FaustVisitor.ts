@@ -2,15 +2,15 @@ import FaustParserVisitor from "./generated/FaustParserVisitor.js";
 import {
   ArglistContext,
   ArgumentContext,
-  ButtonContext,
+  ButtonContext, CaseruleContext,
   CheckboxContext,
-  DefinitionContext,
+  DefinitionContext, DeflistContext,
   DefnameContext,
-  ExpressionContext, FinputsContext, FoutputsContext,
+  ExpressionContext, FconstContext, FfunctionContext, FinputsContext, FoutputsContext,
   FparContext,
   FprodContext,
-  FseqContext,
-  FsumContext,
+  FseqContext, FstringContext,
+  FsumContext, FunContext, FvariableContext,
   HbargraphContext,
   HgroupContext,
   HsliderContext,
@@ -18,16 +18,16 @@ import {
   ImportStatementContext,
   InfixexprContext,
   NameContext,
-  NentryContext, NumberContext,
+  NentryContext, NumberContext, ParamsContext,
   PrimitiveContext,
   ProgramContext,
   RecinitionContext,
   ReclistContext,
-  RecnameContext,
+  RecnameContext, SignatureContext,
   SoundfileContext,
   StatementContext,
   StringContext,
-  TgroupContext,
+  TgroupContext, TypeContext, TypelistContext,
   UqstringContext,
   VallistContext,
   VariantContext,
@@ -49,7 +49,6 @@ import {
   WithExpression,
   LetrecExpression,
   BinaryExpression,
-  StubNode,
   ApplicationExpression,
   NumberPrimitive,
   WirePrimitive,
@@ -79,7 +78,15 @@ import {
   Component,
   Library,
   Environment,
-  Waveform, Route
+  Waveform,
+  Route,
+  ForeignFunction,
+  ForeignConstant,
+  ForeignVariable,
+  LambdaExpression,
+  ExplicitSubstitution,
+  PatternMatching,
+  Pattern
 } from "./ast/nodes.interface.js";
 
 const EOF = "<EOF>";
@@ -104,9 +111,12 @@ export class FaustVisitor extends FaustParserVisitor {
 
 
   // Visit a parse tree produced by FaustParser#variant.
-  visitVariant(ctx: VariantContext) {
-    console.log('variant returns stub');
-    return "stub";
+  visitVariant(ctx: VariantContext): string | null {
+    if (ctx.precision) {
+      return ctx.precision.text;
+    }
+
+    return null;
   }
 
   visitImportStatement(ctx: ImportStatementContext): Import {
@@ -137,25 +147,24 @@ export class FaustVisitor extends FaustParserVisitor {
       return new Declare(fnName, name, value, this.getLocation(ctx));
     }
 
-    throw new Error('Statement is neither DefinitionNode | ImportNode | DeclareNode');
+    console.log("ERROR: Parsing statement");
+
+    return null;
   }
 
 
   visitVariantstatement(ctx: VariantstatementContext): PrecisionDeclaration {
-    const precision = this.visitVariant(ctx.precision);
+    const precisions: (string | null)[] = ctx.variant().map((v: VariantContext) => this.visitVariant(v));
     const declaration = this.visitStatement(ctx.variantStatement);
 
-    return new PrecisionDeclaration(precision, declaration, this.getLocation(ctx));
+    return new PrecisionDeclaration(precisions, declaration, this.getLocation(ctx));
   }
 
-  // Visit a parse tree produced by FaustParser#definition.
   visitDefinition(ctx: DefinitionContext): Definition | null {
 
     const args = ctx.args
       ? this.visitArglist(ctx.args)
       : null;
-
-    // TODO: with some errors ctx.identname can be empty. Error case: "a 1 + 1"
 
     if (ctx.identname && ctx.expr) {
       const id = this.visitDefname(ctx.identname);
@@ -217,11 +226,22 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
   // Visit a parse tree produced by FaustParser#deflist.
-  visitDeflist(ctx: any) {
-    console.log("visitDeflist not implemented");
-    return this.visitChildren(ctx);
-  }
+  visitDeflist(ctx: DeflistContext) {
+    if (ctx.def) {
+      const precisions: (string | null)[] = ctx.variant().map((v: VariantContext) => this.visitVariant(v));
+      const declaration = this.visitDefinition(ctx.def);
 
+      return new PrecisionDeclaration(precisions, declaration, this.getLocation(ctx));
+    }
+
+    if (ctx.def) {
+      return this.visitDefinition(ctx.def);
+    }
+
+    console.log('ERROR parse deflist');
+
+    return null;
+  }
 
   visitArgument(ctx: ArgumentContext): BaseNode | null {
     if (ctx.op && ctx.left && ctx.right) {
@@ -242,10 +262,25 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
 
-  // Visit a parse tree produced by FaustParser#params.
-  visitParams(ctx: any) {
-    console.log('Visit params not implemented');
-    return this.visitChildren(ctx);
+  visitParams(ctx: ParamsContext): (Identifier | null)[] | null {
+    if (ctx.id && ctx.pars) {
+      const params = this.visitParams(ctx.pars);
+
+      if (!params) {
+        console.log("ERROR: Visit lambda params");
+        return null;
+      }
+
+      return [...params, this.visitIdent(ctx.id)];
+    }
+
+    if (ctx.id) {
+      return [this.visitIdent(ctx.id)];
+    }
+
+    console.log("ERROR: Visit lambda params");
+
+    return null;
   }
 
 
@@ -299,11 +334,17 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
   visitInfixexpr(ctx: InfixexprContext): BaseNode | null {
-    if (ctx.definitions) {
-      return new StubNode(
-        'Substitution stub',
+    if (ctx.left && ctx.definitions) {
+      const expr = this.visitInfixexpr(ctx.left);
+
+      const definitions = ctx.deflist()
+        .map((definition: DeflistContext) => this.visitDeflist(definition));
+
+      return new ExplicitSubstitution(
+        definitions,
+        expr,
         this.getLocation(ctx)
-      );
+      )
     }
 
     if (ctx.op && ctx.expr) {
@@ -453,8 +494,35 @@ export class FaustVisitor extends FaustParserVisitor {
       return this.visitFoutputs(firstChild);
     }
 
+    if (firstChild instanceof FfunctionContext) {
+      return this.visitFfunction(firstChild);
+    }
+
+    if (firstChild instanceof FconstContext) {
+      return this.visitFconst(firstChild);
+    }
+
+    if (firstChild instanceof FvariableContext) {
+      return this.visitFvariable(firstChild);
+    }
+
     if (ctx.primitiveexpr) {
       return this.visitExpression(ctx.primitiveexpr);
+    }
+
+    if (ctx.lambdaparams && ctx.expr) {
+      const params = this.visitParams(ctx.lambdaparams);
+
+      if (!params) {
+        console.log('ERROR: Lambda expression');
+        return null;
+      }
+
+      return new LambdaExpression(
+        params,
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      );
     }
 
     if (ctx.source) {
@@ -504,6 +572,15 @@ export class FaustVisitor extends FaustParserVisitor {
       );
     }
 
+    if (ctx.patterns) {
+      const patterns = ctx.caserule().map((p: CaseruleContext) => this.visitCaserule(p));
+
+      return new PatternMatching(
+        patterns,
+        this.getLocation(ctx)
+      );
+    }
+
     console.log("ERROR: primitive not found, returning null");
 
     return null;
@@ -511,23 +588,55 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
 
-  // Visit a parse tree produced by FaustParser#ffunction.
-  visitFfunction(ctx: any) {
-    console.log("visitFfunction: not implemented");
-    return this.visitChildren(ctx);
+  visitFfunction(ctx: FfunctionContext) {
+    if (ctx.sign && ctx.header && ctx.str) {
+
+      const signature = this.visitSignature(ctx.sign);
+      const header = this.visitFstring(ctx.header);
+      const str = this.visitString(ctx.str);
+
+      return new ForeignFunction(
+        signature?.fnType || null,
+        signature?.fn || null,
+        signature?.fnTypelist || null,
+        header,
+        str,
+        this.getLocation(ctx)
+      )
+    }
+
+    console.log('ERROR: Parse ffunction');
+    return null;
   }
 
 
-  // Visit a parse tree produced by FaustParser#fconst.
-  visitFconst(ctx: any) {
-    console.log("visitFconst: not implemented");
-    return this.visitChildren(ctx);
+  visitFconst(ctx: FconstContext) {
+    if (ctx.ctype && ctx.cname && ctx.cstring) {
+      return new ForeignConstant(
+        this.visitType(ctx.ctype),
+        this.visitName(ctx.cname),
+        this.visitFstring(ctx.cstring),
+        this.getLocation(ctx)
+      )
+    }
+
+    console.log('ERROR: parse fconst');
+    return null;
   }
 
 
-  // Visit a parse tree produced by FaustParser#fvariable.
-  visitFvariable(ctx: any) {
-    console.log("visitFvariable: not implemented");
+  visitFvariable(ctx: FvariableContext) {
+    if (ctx.vtype && ctx.vname && ctx.vstring) {
+      return new ForeignVariable(
+        this.visitType(ctx.vtype),
+        this.visitName(ctx.vname),
+        this.visitFstring(ctx.vstring),
+        this.getLocation(ctx)
+      )
+    }
+
+    console.log('ERROR: parse fvariable');
+
     return this.visitChildren(ctx);
   }
 
@@ -787,17 +896,16 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
 
-  // Visit a parse tree produced by FaustParser#caserulelist.
-  visitCaserulelist(ctx: any) {
-    console.log("visitCaserulelist: not implemented");
-    return this.visitChildren(ctx);
-  }
+  visitCaserule(ctx: CaseruleContext) {
+    if (ctx.args && ctx.expr) {
+      return new Pattern(
+        this.visitArglist(ctx.args),
+        this.visitExpression(ctx.expr),
+        this.getLocation(ctx)
+      )
+    }
 
-
-  // Visit a parse tree produced by FaustParser#caserule.
-  visitCaserule(ctx: any) {
-    console.log("visitCaserule: not implemented");
-    return this.visitChildren(ctx);
+    return null;
   }
 
 
@@ -812,11 +920,9 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
   // Visit a parse tree produced by FaustParser#fstring.
-  visitFstring(ctx: any) {
-    console.log("visitFstring: not implemented");
-    return this.visitChildren(ctx);
+  visitFstring(ctx: FstringContext): string | null {
+    return ctx.str?.text || null;
   }
-
 
   // Visit a parse tree produced by FaustParser#vallist.
   visitVallist(ctx: VallistContext): (number | null)[] | null {
@@ -868,52 +974,82 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
 
-  // Visit a parse tree produced by FaustParser#type.
-  visitType(ctx: any) {
-    console.log("visitType: not implemented");
-    return this.visitChildren(ctx);
+  visitType(ctx: TypeContext): string | null {
+    return ctx?.intFloatType?.text || null;
   }
 
 
-  // Visit a parse tree produced by FaustParser#signature.
-  visitSignature(ctx: any) {
-    console.log("visitSignature: not implemented");
-    return this.visitChildren(ctx);
+  visitSignature(ctx: SignatureContext) {
+    if (ctx.fntype && ctx.fn && ctx.fntypelist) {
+      const fnType = this.visitType(ctx.fntype);
+      const fn = this.visitFun(ctx.fn);
+      const fnTypelist = this.visitTypelist(ctx.fntypelist);
+
+      return {
+        fnType,
+        fn,
+        fnTypelist
+      };
+    }
+
+    if (ctx.fntype && ctx.fn) {
+      const fnType = this.visitType(ctx.fntype);
+      const fn = this.visitFun(ctx.fn);
+
+      return {
+        fnType,
+        fn
+      };
+    }
+
+    console.log('ERROR: Visit visitSignature');
+
+    return null;
   }
 
+  visitFun(ctx: FunContext) {
+    if (ctx.sp && ctx.dp && ctx.qp) {
+      return `${ctx.sp.text},${ctx.dp.text},${ctx.dp.text}`; // TODO: return proper function identificators
+    }
 
-  // Visit a parse tree produced by FaustParser#fun.
-  visitFun(ctx: any) {
-    console.log("visitFun: not implemented");
-    return this.visitChildren(ctx);
+    if (ctx.sp && ctx.dp) {
+      return `${ctx.sp.text},${ctx.dp.text}`; // TODO: return proper function identificators
+    }
+
+    if (ctx.sp) {
+      return `${ctx.sp.text}`; // TODO: return proper function identificators
+    }
+
+    console.log('ERROR: Visit visitFun');
+    return null;
   }
-
-
-  // Visit a parse tree produced by FaustParser#singleprecisionfun.
-  visitSingleprecisionfun(ctx: any) {
-    console.log("visitSingleprecisionfun: not implemented");
-    return this.visitChildren(ctx);
-  }
-
-
-  // Visit a parse tree produced by FaustParser#doubleprecisionfun.
-  visitDoubleprecisionfun(ctx: any) {
-    console.log("visitDoubleprecisionfun: not implemented");
-    return this.visitChildren(ctx);
-  }
-
-
-  // Visit a parse tree produced by FaustParser#quadprecisionfun.
-  visitQuadprecisionfun(ctx: any) {
-    console.log("visitQuadprecisionfun: not implemented");
-    return this.visitChildren(ctx);
-  }
-
 
   // Visit a parse tree produced by FaustParser#typelist.
-  visitTypelist(ctx: any) {
-    console.log("visitTypelist: not implemented");
-    return this.visitChildren(ctx);
+  visitTypelist(ctx: TypelistContext): (string | null)[] | null {
+    if (ctx.fntypelist && ctx.fntype) {
+
+      const typelist = this.visitTypelist(ctx.fntypelist);
+      if (!typelist) {
+        console.log('ERROR: Visit typelist');
+        return null;
+      }
+
+      const type = this.visitType(ctx.fntype)
+
+      if (!typelist) {
+        console.log('ERROR: Visit typelist');
+        return null;
+      }
+
+      return [...typelist, type];
+    }
+
+    if (ctx.fntype) {
+      return [this.visitType(ctx.fntype)];
+    }
+
+    console.log('ERROR: Visit typelist');
+    return null;
   }
 
   visitTerminal(ctx: any) {

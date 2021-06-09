@@ -6,5 +6,8 @@ parser/node_modules
 parser/build
 parser/generated
 parser/yarn-error.log
+parser/faust-libraries
+parser/out
 yarn-error.log
 .idea
+**/*.DS_Store

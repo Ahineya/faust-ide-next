@@ -4,17 +4,20 @@ options {
     tokenVocab=FaustLexer;
     }
 
-variantstatement: precision = variant variantStatement = statement;
+variantstatement: (variant)+ variantStatement = statement;
 program : (statement | variantstatement)* EOF;
 
-variant : FLOATMODE | DOUBLEMODE | QUADMODE | FIXEDPOINTMODE;
+variant
+    : precision = FLOATMODE
+    | precision = DOUBLEMODE
+    | precision = QUADMODE
+    | precision = FIXEDPOINTMODE;
 
 importStatement : IMPORT LPAR importName = uqstring RPAR ENDDEF;
 statement : imp = importStatement
     | DECLARE decname = name decval = string ENDDEF
     | DECLARE decname = name decarg = name decval = string ENDDEF
     | def = definition
-//    | BDOC doc ENDDOC
 ;
 
 definition
@@ -31,14 +34,14 @@ recinition: identname = recname DEF expr = expression ENDDEF;
 
 recname : DELAY1 identname = ident;
 
-deflist : variant | definition;
+deflist : def = definition | (variant)+ def = definition;
 
 argument : <assoc=right>left = argument op = SEQ right = argument
     | <assoc=right> left = argument op = (SPLIT|MIX) right = argument
     | left = argument op = REC right = argument
     | expr = infixexpr;
 
-params : ident | params PAR ident;
+params : id = ident | pars = params PAR id = ident;
 
 withdef : (definition | variant definition)*;
 
@@ -52,6 +55,9 @@ expression : infexpr = infixexpr
 
 infixexpr
     : prim = primitive
+    | callee = infixexpr LPAR arguments = arglist RPAR
+
+    | left = infixexpr LCROC definitions = deflist* RCROC // EXPLICIT SUBSTITUTION, replacing what in scope with custom definitions
 
     | left = infixexpr op = FDELAY right = infixexpr
     | expr = infixexpr op = DELAY1
@@ -81,9 +87,6 @@ infixexpr
     | left = infixexpr op = GE right = infixexpr
     | left = infixexpr op = EQ right = infixexpr
     | left = infixexpr op = NE right = infixexpr
-
-    | callee = infixexpr LPAR arguments = arglist RPAR
-    | left = infixexpr LCROC definitions = deflist* RCROC // EXPLICIT SUBSTITUTION, replacing what in scope with custom definitions
 ;
 
 primitive
@@ -164,8 +167,8 @@ primitive
     | sign = SUB primitiveident = ident
     
     | LPAR primitiveexpr = expression RPAR
-    | LAMBDA LPAR params RPAR DOT LPAR expression RPAR
-    | CASE LBRAQ caserulelist RBRAQ
+    | LAMBDA LPAR lambdaparams = params RPAR DOT LPAR expr = expression RPAR
+    | CASE LBRAQ patterns = caserule+ RBRAQ
     | ffunction
     | fconst
     | fvariable
@@ -197,9 +200,9 @@ primitive
     | foutputs
 ;
 
-ffunction : FFUNCTION LPAR signature PAR fstring PAR string RPAR;
-fconst : FCONSTANT LPAR type name PAR fstring RPAR;
-fvariable : FVARIABLE LPAR type name PAR fstring RPAR;
+ffunction : FFUNCTION LPAR sign = signature PAR header = fstring PAR str = string RPAR;
+fconst : FCONSTANT LPAR ctype = type cname = name PAR cstring = fstring RPAR;
+fvariable : FVARIABLE LPAR vtype = type vname = name PAR vstring = fstring RPAR;
 
 button : BUTTON LPAR caption = uqstring RPAR;
 checkbox : CHECKBOX LPAR caption = uqstring RPAR;
@@ -221,12 +224,11 @@ fprod : op = IPROD LPAR id = ident PAR arg = argument PAR expr = expression RPAR
 finputs : INPUTS LPAR expr = expression RPAR;
 foutputs : OUTPUTS LPAR expr = expression RPAR;
 
-caserulelist : caserule | caserulelist caserule;
-caserule : LPAR arglist RPAR ARROW expression ENDDEF;
+caserule : LPAR args = arglist RPAR ARROW expr = expression ENDDEF;
 
 ident: identname = IDENT;
 uqstring : STRING;
-fstring : STRING | FSTRING;
+fstring : str = (STRING | FSTRING);
 vallist : n = number | list = vallist PAR n = number;
 number : n = INT
     | n = FLOAT
@@ -236,13 +238,11 @@ number : n = INT
     | sign = SUB n = FLOAT;
 string : STRING;
 name : IDENT;
-type : INTCAST | FLOATCAST;
-signature : type fun LPAR typelist RPAR;
+type : intFloatType = (INTCAST | FLOATCAST);
 
-fun: singleprecisionfun | singleprecisionfun OR doubleprecisionfun | singleprecisionfun OR doubleprecisionfun OR quadprecisionfun;
-singleprecisionfun : IDENT;
-doubleprecisionfun : IDENT;
-quadprecisionfun : IDENT;
+signature : fntype = type fn = fun LPAR fntypelist = typelist RPAR
+    | fntype = type fn = fun LPAR RPAR;
 
+fun: sp = IDENT | sp = IDENT OR dp = IDENT | sp = IDENT OR dp = IDENT OR qp = IDENT;
 
-typelist : type | typelist PAR type;
+typelist : fntype = type | fntypelist = typelist PAR fntype = type;

@@ -60,7 +60,7 @@ export class PrecisionDeclaration extends BaseNode {
   public readonly type = 'PrecisionDeclaration';
 
   constructor(
-    public precision: string,
+    public precision: (string | null)[],
     public declaration: BaseNode | null,
     location: ILocation
   ) {
@@ -73,6 +73,41 @@ export class FileImport extends BaseNode {
 
   constructor(
     public source: string,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class ExplicitSubstitution extends BaseNode {
+  public readonly type = "ExplicitSubstitution";
+
+  constructor(
+    public substitutions: (BaseNode | null)[] | null,
+    public expression: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class PatternMatching extends BaseNode {
+  public readonly type = "PatternMatching";
+
+  constructor(
+    public patterns: (BaseNode | null)[] | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class Pattern extends BaseNode {
+  public readonly type = "Pattern";
+
+  constructor(
+    public args: (BaseNode | null)[] | null,
+    public expression: BaseNode | null,
     location: ILocation
   ) {
     super(location);
@@ -418,14 +453,55 @@ export class Route extends BaseNode {
   }
 }
 
-export class StubNode extends BaseNode {
-  public readonly type = 'STUB_NODE';
+export class ForeignFunction extends BaseNode {
+  public readonly type = "ForeignFunction";
 
   constructor(
-    public text: string,
+    public fnType: string | null,
+    public signature: string | null,
+    public types: (string | null)[] | null,
+    public headerFile: string | null,
+    public str: string | null,
     location: ILocation
   ) {
     super(location);
   }
 }
 
+export class ForeignConstant extends BaseNode {
+  public readonly type = "ForeignConstant";
+
+  constructor(
+    public name: string | null,
+    public ctype: string | null,
+    public str: string | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class ForeignVariable extends BaseNode {
+  public readonly type = "ForeignVariable";
+
+  constructor(
+    public name: string | null,
+    public ctype: string | null,
+    public str: string | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class LambdaExpression extends BaseNode {
+  public readonly type = "LambdaExpression";
+
+  constructor(
+    public params: (Identifier | null)[] | null,
+    public expression: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
