@@ -16,7 +16,7 @@ variant
 importStatement : IMPORT LPAR importName = uqstring RPAR ENDDEF;
 statement : imp = importStatement
     | DECLARE decname = name decval = string ENDDEF
-    | DECLARE decname = name decarg = name decval = string ENDDEF
+    | DECLARE decarg = name decname = name decval = string ENDDEF
     | def = definition
 ;
 
@@ -236,8 +236,8 @@ number : n = INT
     | sign = ADD n = FLOAT
     | sign = SUB n = INT
     | sign = SUB n = FLOAT;
-string : STRING;
-name : IDENT;
+string : s = STRING;
+name : n = IDENT;
 type : intFloatType = (INTCAST | FLOATCAST);
 
 signature : fntype = type fn = fun LPAR fntypelist = typelist RPAR

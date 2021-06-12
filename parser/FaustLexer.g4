@@ -158,6 +158,7 @@ FIXEDPOINTMODE : 'fixedpointprecision';
 IDENT : '_'ID | ID;
 
 STRING : '"' ( ESC | ~[\\"\r] )* '"';
+UNTERMINATED_STRING : '"' ( ESC | ~[\\"\r] )* ;
 
 FSTRING : '<'LETTER*'>' | '<'LETTER*'.'LETTER'>';
 
@@ -166,3 +167,5 @@ LINE_COMMENT : '//' ~[\r\n]* -> skip;
 MDOC: '<mdoc>' .*? '</mdoc>' -> skip;
 
 WSPACE : [ \t\r\n]+ -> skip;
+
+ErrorChar : . ;

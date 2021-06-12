@@ -20,11 +20,15 @@ class EditorStore {
   private vimModeController: any;
 
   constructor() {
+
+  }
+
+  private subscribeToSettingsChanges() {
     settingsStore.onSettingsChanged.subscribe(settings => {
       if (settings.editor.isVimMode !== !!this.vimModeController) {
         this.toggleVimMode();
       }
-    })
+    });
   }
 
   setMonacoInstance(monaco: Monaco) {
@@ -37,6 +41,10 @@ class EditorStore {
 
   setEditor(editor: editor.ICodeEditor) {
     this.editor = editor;
+
+    console.log('SUBSCRIBING TO EDITOR SETTINGS');
+
+    this.subscribeToSettingsChanges();
   }
 
   toggleVimMode() {
@@ -69,6 +77,14 @@ class EditorStore {
       }
 
     });
+  }
+
+  showMephistoErrors(errors: string[]) {
+    const editor = this.editor!;
+
+    errors.forEach(e => {
+
+    })
   }
 
   // TODO: Improve error handling here

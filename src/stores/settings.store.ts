@@ -18,7 +18,7 @@ class SettingsStore {
 
     this.onSettingsChanged = new BehaviorSubject<ISettings>({
       editor: {
-        isVimMode: false
+        isVimMode: true
       }
     });
   }

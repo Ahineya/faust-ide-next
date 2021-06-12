@@ -14,7 +14,7 @@ export const CodeEditor = (props: IProps) => {
 
   const saveEditorState = (value: string | undefined, event: unknown) => {
     editorStore.hideError();
-    console.log(value, event);
+    // console.log(value, event);
     if (value) {
       props.onChange(value);
     }

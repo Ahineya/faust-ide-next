@@ -8,15 +8,47 @@ export interface ILocation {
   end: IPosition
 }
 
-export abstract class BaseNode {
-  public readonly abstract  type: string;
+export class BaseNode {
+  public static readonly type: string = 'BaseNode';
+
+  public scope: number | null = null;
+  public scopeStack: number[] = [];
+
+  public insN: number | null = null;
+  public outsN: number | null = null;
 
   constructor(public location: ILocation) {
+  }
+
+  process(enter: (node: BaseNode) => void, exit?: (node: BaseNode) => void) {
+    enter(this);
+
+    Object.keys(this)
+      .forEach(key => {
+        // @ts-ignore
+        if (this[key] instanceof BaseNode) {
+          // @ts-ignore
+          this[key].process(enter);
+        }
+        // @ts-ignore
+        if (Array.isArray(this[key])) {
+          //@ts-ignore
+          this[key].forEach(n => {
+            if (n instanceof BaseNode) {
+              n.process(enter)
+            }
+          });
+        }
+      });
+
+    if (exit) {
+      exit(this);
+    }
   }
 }
 
 export class Program extends BaseNode {
-  public readonly type = 'Program';
+  public static readonly type = 'Program';
 
   constructor(public body: (Definition | Import | Declare)[], location: ILocation) {
     super(location);
@@ -24,7 +56,7 @@ export class Program extends BaseNode {
 }
 
 export class Environment extends BaseNode {
-  public readonly type = 'Environment';
+  public static readonly type = 'Environment';
 
   constructor(public body: (Definition | Import | Declare)[], location: ILocation) {
     super(location);
@@ -32,7 +64,18 @@ export class Environment extends BaseNode {
 }
 
 export class Identifier extends BaseNode {
-  public readonly type = 'Identifier';
+  public static readonly type = 'Identifier';
+
+  constructor(
+    public name: string,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class IdentifierDeclaration extends BaseNode {
+  public static readonly type = 'IdentifierDeclaration';
 
   constructor(
     public name: string,
@@ -43,10 +86,24 @@ export class Identifier extends BaseNode {
 }
 
 export class Definition extends BaseNode {
-  public readonly type = 'Definition';
+  public static readonly type = 'Definition';
 
   constructor(
-    public id: BaseNode | null,
+    public id: IdentifierDeclaration | null,
+    public args: (BaseNode | null)[] | null,
+    public recursive: boolean,
+    public expression: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class PatternDefinition extends BaseNode {
+  public static readonly type = 'PatternDefinition';
+
+  constructor(
+    public id: IdentifierDeclaration | null,
     public args: (BaseNode | null)[] | null,
     public recursive: boolean,
     public expression: BaseNode | null,
@@ -57,7 +114,7 @@ export class Definition extends BaseNode {
 }
 
 export class PrecisionDeclaration extends BaseNode {
-  public readonly type = 'PrecisionDeclaration';
+  public static readonly type = 'PrecisionDeclaration';
 
   constructor(
     public precision: (string | null)[],
@@ -69,7 +126,7 @@ export class PrecisionDeclaration extends BaseNode {
 }
 
 export class FileImport extends BaseNode {
-  public type = 'FileImport';
+  public static type = 'FileImport';
 
   constructor(
     public source: string,
@@ -80,7 +137,7 @@ export class FileImport extends BaseNode {
 }
 
 export class ExplicitSubstitution extends BaseNode {
-  public readonly type = "ExplicitSubstitution";
+  public static readonly type = "ExplicitSubstitution";
 
   constructor(
     public substitutions: (BaseNode | null)[] | null,
@@ -92,7 +149,7 @@ export class ExplicitSubstitution extends BaseNode {
 }
 
 export class PatternMatching extends BaseNode {
-  public readonly type = "PatternMatching";
+  public static readonly type = "PatternMatching";
 
   constructor(
     public patterns: (BaseNode | null)[] | null,
@@ -103,7 +160,7 @@ export class PatternMatching extends BaseNode {
 }
 
 export class Pattern extends BaseNode {
-  public readonly type = "Pattern";
+  public static readonly type = "Pattern";
 
   constructor(
     public args: (BaseNode | null)[] | null,
@@ -115,19 +172,19 @@ export class Pattern extends BaseNode {
 }
 
 export class Import extends FileImport {
-  public readonly type = 'Import';
+  public static readonly type = 'Import';
 }
 
 export class Component extends FileImport {
-  public readonly type = 'Component';
+  public static readonly type = 'Component';
 }
 
 export class Library extends FileImport {
-  public readonly type = 'Library';
+  public static readonly type = 'Library';
 }
 
 export class Declare extends BaseNode {
-  public readonly type = 'Declare';
+  public static readonly type = 'Declare';
 
   constructor(
     public fnName: string | null,
@@ -140,7 +197,7 @@ export class Declare extends BaseNode {
 }
 
 export class CompositionExpression extends BaseNode {
-  public readonly type = 'CompositionExpression';
+  public static readonly type = 'CompositionExpression';
 
   constructor(
     public operator: '~' | ',' | ':' | ':>' | '<:' | '+>',
@@ -153,7 +210,7 @@ export class CompositionExpression extends BaseNode {
 }
 
 export class WithExpression extends BaseNode {
-  public readonly type = 'WithExpression';
+  public static readonly type = 'WithExpression';
 
   constructor(
     public expression: BaseNode | null,
@@ -165,7 +222,7 @@ export class WithExpression extends BaseNode {
 }
 
 export class LetrecExpression extends BaseNode {
-  public readonly type = 'LetrecExpression';
+  public static readonly type = 'LetrecExpression';
 
   constructor(
     public expression: BaseNode | null,
@@ -177,7 +234,7 @@ export class LetrecExpression extends BaseNode {
 }
 
 export class BinaryExpression extends BaseNode {
-  public readonly type = 'BinaryExpression';
+  public static readonly type = 'BinaryExpression';
 
   constructor(
     public operator: string,
@@ -190,7 +247,7 @@ export class BinaryExpression extends BaseNode {
 }
 
 export class ApplicationExpression extends BaseNode {
-  public readonly type = 'ApplicationExpression';
+  public static readonly type = 'ApplicationExpression';
 
   constructor(
     public args: (BaseNode | null)[] | null,
@@ -201,10 +258,11 @@ export class ApplicationExpression extends BaseNode {
   }
 }
 
-export abstract class Primitive extends BaseNode {}
+export abstract class Primitive extends BaseNode {
+}
 
 export class NumberPrimitive extends Primitive {
-  public readonly type = 'NumberPrimitive';
+  public static readonly type = 'NumberPrimitive';
 
   constructor(
     public value: number,
@@ -215,15 +273,15 @@ export class NumberPrimitive extends Primitive {
 }
 
 export class WirePrimitive extends Primitive {
-  public readonly type = 'WirePrimitive';
+  public static readonly type = 'WirePrimitive';
 }
 
 export class CutPrimitive extends Primitive {
-  public readonly type = 'CutPrimitive';
+  public static readonly type = 'CutPrimitive';
 }
 
 export class BroadPrimitive extends Primitive {
-  public readonly type = 'BroadPrimitive';
+  public static readonly type = 'BroadPrimitive';
 
   constructor(
     public primitive: string,
@@ -234,7 +292,7 @@ export class BroadPrimitive extends Primitive {
 }
 
 export class UnaryExpression extends BaseNode {
-  public readonly type = 'UnaryExpression';
+  public static readonly type = 'UnaryExpression';
 
   constructor(
     public operator: '-',
@@ -246,7 +304,7 @@ export class UnaryExpression extends BaseNode {
 }
 
 export class PostfixDelayExpression extends BaseNode {
-  public readonly type = 'PostfixDelayExpression';
+  public static readonly type = 'PostfixDelayExpression';
 
   constructor(
     public expression: BaseNode | null,
@@ -266,19 +324,23 @@ export abstract class Control extends Primitive {
     // TODO: Parse label metadata here
   }
 }
-export abstract class InputControl extends Control {}
-export abstract class OutputControl extends Control {}
+
+export abstract class InputControl extends Control {
+}
+
+export abstract class OutputControl extends Control {
+}
 
 export class ButtonControl extends InputControl {
-  public readonly type = 'ButtonControl';
+  public static readonly type = 'ButtonControl';
 }
 
 export class CheckboxControl extends InputControl {
-  public readonly type = 'CheckboxControl';
+  public static readonly type = 'CheckboxControl';
 }
 
 export class NumericInputControl extends InputControl {
-  public readonly type = 'NumericInputControl';
+  public static readonly type = 'NumericInputControl';
   public readonly controlType: string = 'Unknown';
 
   constructor(
@@ -287,7 +349,6 @@ export class NumericInputControl extends InputControl {
     public min: BaseNode | null,
     public max: BaseNode | null,
     public step: BaseNode | null,
-
     location: ILocation
   ) {
     super(label, location);
@@ -295,7 +356,7 @@ export class NumericInputControl extends InputControl {
 }
 
 export class GroupControl extends Control {
-  public readonly type = 'GroupControl';
+  public static readonly type = 'GroupControl';
   public readonly groupType: string = 'unknown';
 
   constructor(
@@ -332,7 +393,7 @@ export class NentryControl extends NumericInputControl {
 }
 
 export class BargraphControl extends OutputControl {
-  public readonly type = 'BargraphControl';
+  public static readonly type = 'BargraphControl';
   public readonly controlType: string = 'unknown';
 
   constructor(
@@ -354,7 +415,7 @@ export class HbargraphControl extends BargraphControl {
 }
 
 export class Soundfile extends BaseNode {
-  public readonly type = 'Soundfile';
+  public static readonly type = 'Soundfile';
 
   constructor(
     public label: string,
@@ -366,11 +427,11 @@ export class Soundfile extends BaseNode {
 }
 
 export class IterativeExpression extends BaseNode {
-  public readonly type = 'IterativeExpression';
+  public static readonly type = 'IterativeExpression';
   public readonly operator: string = 'unknown';
 
   constructor(
-    public counter: BaseNode | null,
+    public counter: Identifier | null,
     public iterations: BaseNode | null,
     public expression: BaseNode | null,
     location: ILocation
@@ -396,7 +457,7 @@ export class ProdIteration extends IterativeExpression {
 }
 
 export class AccessExpression extends BaseNode {
-  public readonly type = 'AccessExpression';
+  public static readonly type = 'AccessExpression';
 
   constructor(
     public environment: BaseNode | null,
@@ -408,7 +469,7 @@ export class AccessExpression extends BaseNode {
 }
 
 export class InputsCall extends BaseNode {
-  public readonly type = 'InputsCall';
+  public static readonly type = 'InputsCall';
 
   constructor(
     public expression: BaseNode | null,
@@ -419,7 +480,7 @@ export class InputsCall extends BaseNode {
 }
 
 export class OutputsCall extends BaseNode {
-  public readonly type = 'OutputsCall';
+  public static readonly type = 'OutputsCall';
 
   constructor(
     public expression: BaseNode | null,
@@ -430,7 +491,7 @@ export class OutputsCall extends BaseNode {
 }
 
 export class Waveform extends BaseNode {
-  public readonly type = 'Waveform';
+  public static readonly type = 'Waveform';
 
   constructor(
     public values: (number | null)[] | null,
@@ -441,7 +502,7 @@ export class Waveform extends BaseNode {
 }
 
 export class Route extends BaseNode {
-  public readonly type = "Route";
+  public static readonly type = "Route";
 
   constructor(
     public ins: BaseNode | null,
@@ -454,7 +515,7 @@ export class Route extends BaseNode {
 }
 
 export class ForeignFunction extends BaseNode {
-  public readonly type = "ForeignFunction";
+  public static readonly type = "ForeignFunction";
 
   constructor(
     public fnType: string | null,
@@ -469,7 +530,7 @@ export class ForeignFunction extends BaseNode {
 }
 
 export class ForeignConstant extends BaseNode {
-  public readonly type = "ForeignConstant";
+  public static readonly type = "ForeignConstant";
 
   constructor(
     public name: string | null,
@@ -482,7 +543,7 @@ export class ForeignConstant extends BaseNode {
 }
 
 export class ForeignVariable extends BaseNode {
-  public readonly type = "ForeignVariable";
+  public static readonly type = "ForeignVariable";
 
   constructor(
     public name: string | null,
@@ -495,7 +556,7 @@ export class ForeignVariable extends BaseNode {
 }
 
 export class LambdaExpression extends BaseNode {
-  public readonly type = "LambdaExpression";
+  public static readonly type = "LambdaExpression";
 
   constructor(
     public params: (Identifier | null)[] | null,

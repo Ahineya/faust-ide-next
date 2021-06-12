@@ -86,7 +86,9 @@ import {
   LambdaExpression,
   ExplicitSubstitution,
   PatternMatching,
-  Pattern
+  Pattern,
+  IdentifierDeclaration,
+  PatternDefinition
 } from "./ast/nodes.interface.js";
 
 const EOF = "<EOF>";
@@ -99,8 +101,6 @@ export class FaustVisitor extends FaustParserVisitor {
 
   // Visit a parse tree produced by FaustParser#program.
   visitProgram(ctx: ProgramContext): Program {
-    // Do not forget, that program might contain variantstatements as well
-
     const body: (Definition | Import | Declare)[] = (this.visitChildren(ctx) as (Definition | Import | Declare | string)[])
       .filter(s => s !== EOF) as unknown as (Definition | Import | Declare)[];
 
@@ -162,13 +162,29 @@ export class FaustVisitor extends FaustParserVisitor {
 
   visitDefinition(ctx: DefinitionContext): Definition | null {
 
-    const args = ctx.args
+    let args = ctx.args
       ? this.visitArglist(ctx.args)
       : null;
+
+    if (args) {
+      // Replacing Identifier with IdentifierDeclaration
+
+      args = args.map(a => {
+        if (a instanceof Identifier) {
+          return new IdentifierDeclaration(a.name, a.location);
+        }
+
+        return a;
+      })
+    }
 
     if (ctx.identname && ctx.expr) {
       const id = this.visitDefname(ctx.identname);
       const expression = this.visitExpression(ctx.expr);
+
+      if (args && args.length) {
+        return new PatternDefinition(id, args, false, expression, this.getLocation(ctx));
+      }
 
       return new Definition(id, args, false, expression, this.getLocation(ctx));
     }
@@ -179,9 +195,8 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
 
-  // Visit a parse tree produced by FaustParser#defname.
-  visitDefname(ctx: DefnameContext): BaseNode | null {
-    return this.visitIdent(ctx.ident());
+  visitDefname(ctx: DefnameContext): IdentifierDeclaration | null {
+    return this.visitIdent(ctx.ident(), true);
   }
 
   visitArglist(ctx: ArglistContext): (BaseNode | null)[] {
@@ -275,7 +290,7 @@ export class FaustVisitor extends FaustParserVisitor {
     }
 
     if (ctx.id) {
-      return [this.visitIdent(ctx.id)];
+      return [this.visitIdent(ctx.id, true)];
     }
 
     console.log("ERROR: Visit lambda params");
@@ -314,7 +329,7 @@ export class FaustVisitor extends FaustParserVisitor {
       return new LetrecExpression(expression, context, this.getLocation(ctx));
     }
 
-    if (ctx.op && ctx.right) {
+    if (ctx.left && ctx.op && ctx.right) {
       const operator = ctx.op.text;
       const left = this.visitExpression(ctx.left);
       const right = this.visitExpression(ctx.right);
@@ -909,7 +924,11 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
 
-  visitIdent(ctx: IdentContext): Identifier {
+  visitIdent(ctx: IdentContext, isDeclaration = false): Identifier {
+    if (isDeclaration) {
+      return new IdentifierDeclaration(ctx.getText(), this.getLocation(ctx));
+    }
+
     return new Identifier(ctx.getText(), this.getLocation(ctx));
   }
 
@@ -965,12 +984,12 @@ export class FaustVisitor extends FaustParserVisitor {
 
   // Visit a parse tree produced by FaustParser#string.
   visitString(ctx: StringContext) {
-    return ctx.STRING().text;
+    return ctx.s.text;
   }
 
 
   visitName(ctx: NameContext) {
-    return ctx.IDENT().text;
+    return ctx.n.text;
   }
 
 
@@ -1068,8 +1087,8 @@ export class FaustVisitor extends FaustParserVisitor {
         column: ctx.start.column
       },
       end: {
-        line: ctx.stop.line,
-        column: ctx.stop.column
+        line: ctx.stop?.line,
+        column: ctx.stop?.column
       }
     }
   }
