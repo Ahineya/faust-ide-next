@@ -102,7 +102,6 @@ export class MephistoValidatorVisitor extends MephistoBaseVisitor {
 
     if (symbol?.astNode) {
 
-
       if (symbol.category === 'patternDeclaration') {
         // this.error(node, `[Internal] ${node.name} VisitIdentifier : patternDeclaration`, true);
 
@@ -186,7 +185,7 @@ export class MephistoValidatorVisitor extends MephistoBaseVisitor {
       }
     }
 
-    this.error(node, '[Internal] CompositionExpression ins and outs');
+    this.error(node, 'CompositionExpression ins and outs', true);
     return {
       ins: null,
       outs: null
@@ -544,15 +543,124 @@ export class MephistoValidatorVisitor extends MephistoBaseVisitor {
   }
 
   public visitSumIteration(node: SumIteration, parent?: BaseNode) {
-    this.visitChildren(node, parent);
+
+    const insOuts = this.visit(node.expression);
+    const numberInsOuts = this.visit(node.iterations);
+
+    if (insOuts && numberInsOuts) {
+
+      if (numberInsOuts.ins === 0 && numberInsOuts.outs === 1) {
+
+        // Here I need somehow to get the value
+        this.error(node, `Sum iteration: need to get the number value`, true);
+
+        return {
+          ins: null,
+          outs: null
+        };
+      } else {
+        this.error(node, `Sum iteration error: number of iteration should be known at compile time`);
+
+        return {
+          ins: null,
+          outs: null
+        };
+      }
+
+      this.error(node, `Sum iteration error`);
+
+      return {
+        ins: null,
+        outs: null
+      };
+    }
+
+    this.error(node, `Sum iteration error`, true);
+
+    return {
+      ins: null,
+      outs: null
+    };
   }
 
   public visitSeqIteration(node: SeqIteration, parent?: BaseNode) {
-    this.visitChildren(node, parent);
+    const insOuts = this.visit(node.expression);
+    const numberInsOuts = this.visit(node.iterations);
+
+    if (insOuts && numberInsOuts) {
+
+      if (numberInsOuts.ins === 0 && numberInsOuts.outs === 1) {
+
+        // Here I need somehow to get the value
+        this.error(node, `Seq iteration: need to get the number value`, true);
+
+        return {
+          ins: null,
+          outs: null
+        };
+      } else {
+        this.error(node, `Seq iteration error: number of iteration should be known at compile time`);
+
+        return {
+          ins: null,
+          outs: null
+        };
+      }
+
+      this.error(node, `Seq iteration error`);
+
+      return {
+        ins: null,
+        outs: null
+      };
+    }
+
+    this.error(node, `Seq iteration error`, true);
+
+    return {
+      ins: null,
+      outs: null
+    };
   }
 
   public visitProdIteration(node: ProdIteration, parent?: BaseNode) {
-    this.visitChildren(node, parent);
+    const insOuts = this.visit(node.expression);
+    const numberInsOuts = this.visit(node.iterations);
+
+    if (insOuts && numberInsOuts) {
+
+      if (numberInsOuts.ins === 0 && numberInsOuts.outs === 1) {
+
+        // Here I need somehow to get the value
+        this.error(node, `Prod iteration: need to get the number value`, true);
+
+        return {
+          ins: null,
+          outs: null
+        };
+      } else {
+        this.error(node, `Sum iteration error: number of iteration should be known at compile time`);
+
+        return {
+          ins: null,
+          outs: null
+        };
+      }
+
+      this.error(node, `Prod iteration error`);
+
+      return {
+        ins: null,
+        outs: null
+      };
+    }
+
+    this.error(node, `Prod iteration error`, true);
+
+    return {
+      ins: null,
+      outs: null
+    };
   }
 
   public visitAccessExpression(node: AccessExpression, parent?: BaseNode) {
@@ -630,7 +738,15 @@ export class MephistoValidatorVisitor extends MephistoBaseVisitor {
   }
 
   public visitRoute(node: Route, parent?: BaseNode) {
-    this.visitChildren(node, parent);
+    // Route requires evaluation
+
+    // node.insN = node.ins;
+    // node.outsN = node.outs;
+    //
+    // return {
+    //   ins: node.insN,
+    //   outs: node.outsN
+    // };
   }
 
   public visitForeignFunction(node: ForeignFunction, parent?: BaseNode) {
@@ -711,13 +827,9 @@ export class MephistoValidatorVisitor extends MephistoBaseVisitor {
   }
 
   public visitPatternDefinition(node: PatternDefinition, parent?: BaseNode) {
+    console.log('here');
     this.visitChildren(node, parent);
   }
-
-  public visitIterativeExpression(node: IterativeExpression, parent?: BaseNode) {
-    this.visitChildren(node, parent);
-  }
-
 
   public visitChildren(node: BaseNode, parent?: BaseNode) {
 

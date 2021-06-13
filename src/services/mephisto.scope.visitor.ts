@@ -12,6 +12,7 @@ import {
   Identifier
 } from "../../parser/build/ast/nodes.interface";
 import {FSymbol, SymbolTable} from "./mephisto.symboltable";
+import {isNode} from "./mephisto.helpers";
 
 
 
@@ -113,11 +114,17 @@ export class MephistoScopeVisitor extends MephistoBaseVisitor {
 
     // Think what to do with pattern matching. for now just allowing redeclaration
 
+    let patternIdentifier = patternDeclaration;
+
+    // if (isNode(parent, PatternDefinition)) {
+    //   patternIdentifier = true;
+    // }
+
     const symbol = new FSymbol(
       node.name,
       parent,
       this.scopeStack[this.scopeStack.length - 1],
-      patternDeclaration
+      patternIdentifier
         ? 'patternDeclaration'
         : 'declaration',
       [...this.scopeStack]

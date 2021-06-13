@@ -4,7 +4,8 @@ import {
   Program,
   BaseNode,
   ParIteration,
-  ProdIteration, SeqIteration, SumIteration
+  ProdIteration, SeqIteration, SumIteration,
+  Route
 } from "../../parser/build/ast/nodes.interface.js";
 import {MephistoScopeVisitor} from "./mephisto.scope.visitor";
 import {MephistoValidatorVisitor} from "./mephisto.validator.visitor";
@@ -46,6 +47,9 @@ class MephistoService {
           if (isNode(node, ProdIteration)) {
             console.log('Program contains prod iteration, evaluation needed for validation');
           }
+          if (isNode(node, Route)) {
+            console.log('Program contains route, evaluation needed for validation');
+          }
         }));
 
         const typer = new MephistoValidatorVisitor(symbolTable, true);
@@ -53,7 +57,7 @@ class MephistoService {
 
         const typeErrors = typer.getErrors();
         if (typeErrors.length) {
-          console.log('Type errors:', typeErrors);
+          console.log('Type errors:', typeErrors.map(te => te.toString()));
         } else {
 
           console.log(`No errors. Process has ${process.astNode.insN} inputs and ${process.astNode.outsN} outputs`)

@@ -53,17 +53,30 @@ import {
 } from "../../parser/build/ast/nodes.interface";
 import {isNode} from "./mephisto.helpers";
 
+class MephistoError {
+  constructor(
+    public message: string,
+    public type: string
+  ) {
+  }
+
+  toString() {
+    return this.message;
+  }
+}
+
 export class MephistoBaseVisitor {
 
-  protected errors: string[] = [];
+  protected errors: MephistoError[] = [];
 
   constructor(public debug = false) {
   }
 
   error(node: BaseNode, error: string, internalError = false) {
-    if (internalError && this.debug || !internalError) {
-      this.errors.push(`${this.getErrorHeader(node, internalError)} ${error}`);
-    }
+    const errorMessage = `${this.getErrorHeader(node, internalError)} ${error}`;
+    this.errors.push(new MephistoError(errorMessage, internalError ? 'internal' : 'general'));
+
+    // this.errors.push(`${this.getErrorHeader(node, internalError)} ${error}`);
   }
 
   getErrorHeader(node: BaseNode, isInternalError = false) {
