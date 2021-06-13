@@ -356,7 +356,7 @@ export class NumericInputControl extends InputControl {
 }
 
 export class GroupControl extends Control {
-  public static readonly type = 'GroupControl';
+  public static type = 'GroupControl';
   public readonly groupType: string = 'unknown';
 
   constructor(
@@ -369,14 +369,17 @@ export class GroupControl extends Control {
 }
 
 export class VGroupControl extends GroupControl {
+  public static readonly type = 'VGroupControl';
   public readonly groupType = 'vgroup';
 }
 
 export class HGroupControl extends GroupControl {
+  public static readonly type = 'VGroupControl';
   public readonly groupType = 'hgroup';
 }
 
 export class TGroupControl extends GroupControl {
+  public static readonly type = 'VGroupControl';
   public readonly groupType = 'tgroup';
 }
 
@@ -427,7 +430,7 @@ export class Soundfile extends BaseNode {
 }
 
 export class IterativeExpression extends BaseNode {
-  public static readonly type = 'IterativeExpression';
+  public static type = 'IterativeExpression';
   public readonly operator: string = 'unknown';
 
   constructor(
@@ -441,18 +444,22 @@ export class IterativeExpression extends BaseNode {
 }
 
 export class ParIteration extends IterativeExpression {
+  public static type = 'ParIteration';
   public readonly operator = 'par';
 }
 
 export class SumIteration extends IterativeExpression {
+  public static type = 'SumIteration';
   public readonly operator = 'sum';
 }
 
 export class SeqIteration extends IterativeExpression {
+  public static type = 'SeqIteration';
   public readonly operator = 'seq';
 }
 
 export class ProdIteration extends IterativeExpression {
+  public static type = 'ProdIteration';
   public readonly operator = 'prod';
 }
 

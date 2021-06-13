@@ -46,12 +46,12 @@ params : id = ident | pars = params PAR id = ident;
 withdef : (definition | variant definition)*;
 
 expression : infexpr = infixexpr
-    | expr = expression op=WITH LBRAQ defs = withdef RBRAQ
     | expr = expression op=LETREC LBRAQ recs = reclist RBRAQ
     | left = expression op=REC right = expression
     | <assoc=right> left = expression op=PAR right = expression
     | <assoc=right> left = expression op=SEQ right = expression
-    | <assoc=right> left = expression op=(SPLIT|MIX) right = expression;
+    | <assoc=right> left = expression op=(SPLIT|MIX) right = expression
+    | expr = expression op=WITH LBRAQ defs = withdef RBRAQ;
 
 infixexpr
     : prim = primitive

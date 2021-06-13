@@ -1,15 +1,14 @@
 import {parse} from "../../parser/build/parse.js";
 import {debounce} from "../helpers/debounce";
 import {
+  Program,
   BaseNode,
-  Definition, Environment,
-  IdentifierDeclaration, IterativeExpression,
-  LambdaExpression, Pattern, PatternDefinition, Program,
-  WithExpression
+  ParIteration,
+  ProdIteration, SeqIteration, SumIteration
 } from "../../parser/build/ast/nodes.interface.js";
 import {MephistoScopeVisitor} from "./mephisto.scope.visitor";
-import {MephistoTyperVisitor} from "./mephisto.typer.visitor";
-import {FSymbol} from "./mephisto.symboltable";
+import {MephistoValidatorVisitor} from "./mephisto.validator.visitor";
+import {isNode} from "./mephisto.helpers";
 
 class MephistoService {
   parseFaustCode(code: string) {
@@ -33,12 +32,32 @@ class MephistoService {
       const process = symbolTable.get('process', 0);
 
       if (process && process.astNode) {
-        const typer = new MephistoTyperVisitor(symbolTable, true);
+
+        process.astNode.process(((node: BaseNode) => {
+          if (isNode(node, ParIteration)) {
+            console.log('Program contains par iteration, evaluation needed for validation');
+          }
+          if (isNode(node, SeqIteration)) {
+            console.log('Program contains seq iteration, evaluation needed for validation');
+          }
+          if (isNode(node, SumIteration)) {
+            console.log('Program contains sum iteration, evaluation needed for validation');
+          }
+          if (isNode(node, ProdIteration)) {
+            console.log('Program contains prod iteration, evaluation needed for validation');
+          }
+        }));
+
+        const typer = new MephistoValidatorVisitor(symbolTable, true);
         typer.visit(process.astNode);
 
         const typeErrors = typer.getErrors();
         if (typeErrors.length) {
           console.log('Type errors:', typeErrors);
+        } else {
+
+          console.log(`No errors. Process has ${process.astNode.insN} inputs and ${process.astNode.outsN} outputs`)
+
         }
       } else {
         console.log('No process definition');
