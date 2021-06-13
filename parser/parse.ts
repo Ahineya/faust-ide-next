@@ -5,13 +5,45 @@ import FaustParser from './generated/FaustParser.js';
 import {FaustErrorListener} from './FaustErrorListener.js';
 import {FaustVisitor} from "./FaustVisitor.js";
 import {FaustErrorStrategy} from "./FaustErrorStrategy.js";
+import {CommentLine, ILocation} from "./ast/nodes.interface";
 
 const {CommonTokenStream, InputStream} = antlr4;
+
+  // const getLocation = (t: any): ILocation {
+  //   return {
+  //     start: {
+  //       line: ctx.start.line,
+  //       column: ctx.start.column
+  //     },
+  //     end: {
+  //       line: ctx.stop?.line,
+  //       column: ctx.stop?.column
+  //     }
+  //   }
+  // }
 
 export const parse = (input: string, debug = false) => {
   const chars = new InputStream(input, true)
   const lexer = new FaustLexer(chars);
   const tokens = new CommonTokenStream(lexer);
+
+  tokens.fill();
+  console.log(tokens);
+
+
+  tokens.tokens.filter(t => [FaustLexer.COMMENT, FaustLexer.LINE_COMMENT].includes(t.type))
+    .map(t => {
+      console.log('AAAAA', t);
+    })
+
+  // tokens.tokens.forEach(t => {
+  //   if (t.type === FaustLexer.COMMENT || t.type === FaustLexer.LINE_COMMENT) {
+  //     console.log(t.text);
+  //
+  //
+  //   }
+  // })
+
   const parser = new FaustParser(tokens);
 
   //@ts-ignore

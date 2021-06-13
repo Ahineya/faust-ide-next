@@ -91,258 +91,207 @@ export class MephistoBaseVisitor {
 
 
     if (isNode(node, Definition)) {
-      this.visitDefinition(node as Definition, parent);
-      return;
+      return this.visitDefinition(node as Definition, parent);
     }
 
     if (isNode(node, Program)) {
-      this.visitProgram(node as Program, parent);
-      return;
+      return this.visitProgram(node as Program, parent);
     }
 
     if (isNode(node, Declare)) {
-      this.visitDeclare(node as Declare, parent);
-      return;
+      return this.visitDeclare(node as Declare, parent);
     }
 
     if (isNode(node, Import)) {
-      this.visitImport(node as Import, parent);
-      return;
+      return this.visitImport(node as Import, parent);
     }
 
     if (isNode(node, Identifier)) {
-      this.visitIdentifier(node as Identifier, parent);
-      return;
+      return this.visitIdentifier(node as Identifier, parent);
     }
 
     if (isNode(node, BaseNode)) {
-      this.visitBaseNode(node as BaseNode, parent);
-      return;
+      return this.visitBaseNode(node as BaseNode, parent);
     }
 
     if (isNode(node, CompositionExpression)) {
-      this.visitCompositionExpression(node as CompositionExpression, parent);
-      return;
+      return this.visitCompositionExpression(node as CompositionExpression, parent);
     }
 
     if (isNode(node, WithExpression)) {
-      this.visitWithExpression(node as WithExpression, parent);
-      return;
+      return this.visitWithExpression(node as WithExpression, parent);
     }
 
     if (isNode(node, LetrecExpression)) {
-      this.visitLetrecExpression(node as LetrecExpression, parent);
-      return;
+      return this.visitLetrecExpression(node as LetrecExpression, parent);
     }
 
     if (isNode(node, BinaryExpression)) {
-      this.visitBinaryExpression(node as BinaryExpression, parent);
-      return;
+      return this.visitBinaryExpression(node as BinaryExpression, parent);
     }
 
     if (isNode(node, ApplicationExpression)) {
-      this.visitApplicationExpression(node as ApplicationExpression, parent);
-      return;
+      return this.visitApplicationExpression(node as ApplicationExpression, parent);
     }
 
     if (isNode(node, NumberPrimitive)) {
-      this.visitNumberPrimitive(node as NumberPrimitive, parent);
-      return;
+      return this.visitNumberPrimitive(node as NumberPrimitive, parent);
     }
 
     if (isNode(node, WirePrimitive)) {
-      this.visitWirePrimitive(node as WirePrimitive, parent);
-      return;
+      return this.visitWirePrimitive(node as WirePrimitive, parent);
     }
 
     if (isNode(node, CutPrimitive)) {
-      this.visitCutPrimitive(node as CutPrimitive, parent);
-      return;
+      return this.visitCutPrimitive(node as CutPrimitive, parent);
     }
 
     if (isNode(node, BroadPrimitive)) {
-      this.visitBroadPrimitive(node as BroadPrimitive, parent);
-      return;
+      return this.visitBroadPrimitive(node as BroadPrimitive, parent);
     }
 
     if (isNode(node, UnaryExpression)) {
-      this.visitUnaryExpression(node as UnaryExpression, parent);
-      return;
+      return this.visitUnaryExpression(node as UnaryExpression, parent);
     }
 
     if (isNode(node, ButtonControl)) {
-      this.visitButtonControl(node as ButtonControl, parent);
-      return;
+      return this.visitButtonControl(node as ButtonControl, parent);
     }
 
     if (isNode(node, PrecisionDeclaration)) {
-      this.visitPrecisionDeclaration(node as PrecisionDeclaration, parent);
-      return;
+      return this.visitPrecisionDeclaration(node as PrecisionDeclaration, parent);
     }
 
     if (isNode(node, CheckboxControl)) {
-      this.visitCheckboxControl(node as CheckboxControl, parent);
-      return;
+      return this.visitCheckboxControl(node as CheckboxControl, parent);
     }
 
     if (isNode(node, VsliderControl)) {
-      this.visitVsliderControl(node as VsliderControl, parent);
-      return;
+      return this.visitVsliderControl(node as VsliderControl, parent);
     }
 
     if (isNode(node, HsliderControl)) {
-      this.visitHsliderControl(node as HsliderControl, parent);
-      return;
+      return this.visitHsliderControl(node as HsliderControl, parent);
     }
 
     if (isNode(node, NentryControl)) {
-      this.visitNentryControl(node as NentryControl, parent);
-      return;
+      return this.visitNentryControl(node as NentryControl, parent);
     }
 
     if (isNode(node, VGroupControl)) {
-      this.visitVGroupControl(node as VGroupControl, parent);
-      return;
+      return this.visitVGroupControl(node as VGroupControl, parent);
     }
 
     if (isNode(node, HGroupControl)) {
-      this.visitHGroupControl(node as HGroupControl, parent);
-      return;
+      return this.visitHGroupControl(node as HGroupControl, parent);
     }
 
     if (isNode(node, TGroupControl)) {
-      this.visitTGroupControl(node as TGroupControl, parent);
-      return;
+      return this.visitTGroupControl(node as TGroupControl, parent);
     }
 
     if (isNode(node, VbargraphControl)) {
-      this.visitVbargraphControl(node as VbargraphControl, parent);
-      return;
+      return this.visitVbargraphControl(node as VbargraphControl, parent);
     }
 
     if (isNode(node, HbargraphControl)) {
-      this.visitHbargraphControl(node as HbargraphControl, parent);
-      return;
+      return this.visitHbargraphControl(node as HbargraphControl, parent);
     }
 
     if (isNode(node, Soundfile)) {
-      this.visitSoundfile(node as Soundfile, parent);
-      return;
+      return this.visitSoundfile(node as Soundfile, parent);
     }
 
     if (isNode(node, ParIteration)) {
-      this.visitParIteration(node as ParIteration, parent);
-      return;
+      return this.visitParIteration(node as ParIteration, parent);
     }
 
     if (isNode(node, SumIteration)) {
-      this.visitSumIteration(node as SumIteration, parent);
-      return;
+      return this.visitSumIteration(node as SumIteration, parent);
     }
 
     if (isNode(node, SeqIteration)) {
-      this.visitSeqIteration(node as SeqIteration, parent);
-      return;
+      return this.visitSeqIteration(node as SeqIteration, parent);
     }
 
     if (isNode(node, ProdIteration)) {
-      this.visitProdIteration(node as ProdIteration, parent);
-      return;
+      return this.visitProdIteration(node as ProdIteration, parent);
     }
 
     if (isNode(node, AccessExpression)) {
-      this.visitAccessExpression(node as AccessExpression, parent);
-      return;
+      return this.visitAccessExpression(node as AccessExpression, parent);
     }
 
     if (isNode(node, OutputsCall)) {
-      this.visitOutputsCall(node as OutputsCall, parent);
-      return;
+      return this.visitOutputsCall(node as OutputsCall, parent);
     }
 
     if (isNode(node, InputsCall)) {
-      this.visitInputsCall(node as InputsCall, parent);
-      return;
+      return this.visitInputsCall(node as InputsCall, parent);
     }
 
     if (isNode(node, PostfixDelayExpression)) {
-      this.visitPostfixDelayExpression(node as PostfixDelayExpression, parent);
-      return;
+      return this.visitPostfixDelayExpression(node as PostfixDelayExpression, parent);
     }
 
     if (isNode(node, Component)) {
-      this.visitComponent(node as Component, parent);
-      return;
+      return this.visitComponent(node as Component, parent);
     }
 
     if (isNode(node, Library)) {
-      this.visitLibrary(node as Library, parent);
-      return;
+      return this.visitLibrary(node as Library, parent);
     }
 
     if (isNode(node, Environment)) {
-      this.visitEnvironment(node as Environment, parent);
-      return;
+      return this.visitEnvironment(node as Environment, parent);
     }
 
     if (isNode(node, Waveform)) {
-      this.visitWaveform(node as Waveform, parent);
-      return;
+      return this.visitWaveform(node as Waveform, parent);
     }
 
     if (isNode(node, Route)) {
-      this.visitRoute(node as Route, parent);
-      return;
+      return this.visitRoute(node as Route, parent);
     }
 
     if (isNode(node, ForeignFunction)) {
-      this.visitForeignFunction(node as ForeignFunction, parent);
-      return;
+      return this.visitForeignFunction(node as ForeignFunction, parent);
     }
 
     if (isNode(node, ForeignConstant)) {
-      this.visitForeignConstant(node as ForeignConstant, parent);
-      return;
+      return this.visitForeignConstant(node as ForeignConstant, parent);
     }
 
     if (isNode(node, ForeignVariable)) {
-      this.visitForeignVariable(node as ForeignVariable, parent);
-      return;
+      return this.visitForeignVariable(node as ForeignVariable, parent);
     }
 
     if (isNode(node, LambdaExpression)) {
-      this.visitLambdaExpression(node as LambdaExpression, parent);
-      return;
+      return this.visitLambdaExpression(node as LambdaExpression, parent);
     }
 
     if (isNode(node, ExplicitSubstitution)) {
-      this.visitExplicitSubstitution(node as ExplicitSubstitution, parent);
-      return;
+      return this.visitExplicitSubstitution(node as ExplicitSubstitution, parent);
     }
 
     if (isNode(node, PatternMatching)) {
-      this.visitPatternMatching(node as PatternMatching, parent);
-      return;
+      return this.visitPatternMatching(node as PatternMatching, parent);
     }
 
     if (isNode(node, Pattern)) {
-      this.visitPattern(node as Pattern, parent);
-      return;
+      return this.visitPattern(node as Pattern, parent);
     }
 
     if (isNode(node, IdentifierDeclaration)) {
-      this.visitIdentifierDeclaration(node as IdentifierDeclaration, parent);
-      return;
+      return this.visitIdentifierDeclaration(node as IdentifierDeclaration, parent);
     }
 
     if (isNode(node, PatternDefinition)) {
-      this.visitPatternDefinition(node as PatternDefinition, parent);
-      return;
+      return this.visitPatternDefinition(node as PatternDefinition, parent);
     }
 
     if (isNode(node, IterativeExpression)) {
-      this.visitIterativeExpression(node as IterativeExpression, parent);
-      return;
+      return this.visitIterativeExpression(node as IterativeExpression, parent);
     }
 
 

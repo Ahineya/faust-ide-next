@@ -10,6 +10,7 @@ import {
 import {MephistoScopeVisitor} from "./mephisto.scope.visitor";
 import {MephistoValidatorVisitor} from "./mephisto.validator.visitor";
 import {isNode} from "./mephisto.helpers";
+import {MephistoPrettyPrintVisitor} from "./mephisto.prettyprint.visitor";
 
 class MephistoService {
   parseFaustCode(code: string) {
@@ -18,6 +19,11 @@ class MephistoService {
     if (errors) {
       console.log(errors);
     }
+
+    const pretty = new MephistoPrettyPrintVisitor();
+
+    const prettyfied = pretty.visit(AST);
+    console.log(prettyfied);
 
     const msv = new MephistoScopeVisitor();
 

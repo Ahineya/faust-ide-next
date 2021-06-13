@@ -340,7 +340,7 @@ export class CheckboxControl extends InputControl {
 }
 
 export class NumericInputControl extends InputControl {
-  public static readonly type = 'NumericInputControl';
+  public static type = 'NumericInputControl';
   public readonly controlType: string = 'Unknown';
 
   constructor(
@@ -374,29 +374,32 @@ export class VGroupControl extends GroupControl {
 }
 
 export class HGroupControl extends GroupControl {
-  public static readonly type = 'VGroupControl';
+  public static readonly type = 'HGroupControl';
   public readonly groupType = 'hgroup';
 }
 
 export class TGroupControl extends GroupControl {
-  public static readonly type = 'VGroupControl';
+  public static readonly type = 'TGroupControl';
   public readonly groupType = 'tgroup';
 }
 
 export class VsliderControl extends NumericInputControl {
+  public static readonly type = 'VsliderControl';
   public readonly controlType = 'vslider';
 }
 
 export class HsliderControl extends NumericInputControl {
+  public static readonly type = 'HsliderControl';
   public readonly controlType = 'hslider';
 }
 
 export class NentryControl extends NumericInputControl {
+  public static readonly type = 'NentryControl';
   public readonly controlType = 'nentry';
 }
 
 export class BargraphControl extends OutputControl {
-  public static readonly type = 'BargraphControl';
+  public static type = 'BargraphControl';
   public readonly controlType: string = 'unknown';
 
   constructor(
@@ -410,10 +413,12 @@ export class BargraphControl extends OutputControl {
 }
 
 export class VbargraphControl extends BargraphControl {
+  public static type = 'HBargraphControl';
   public readonly controlType = 'vbargraph';
 }
 
 export class HbargraphControl extends BargraphControl {
+  public static type = 'HBargraphControl';
   public readonly controlType = 'vbargraph';
 }
 
@@ -540,8 +545,8 @@ export class ForeignConstant extends BaseNode {
   public static readonly type = "ForeignConstant";
 
   constructor(
-    public name: string | null,
     public ctype: string | null,
+    public name: string | null,
     public str: string | null,
     location: ILocation
   ) {
@@ -553,8 +558,8 @@ export class ForeignVariable extends BaseNode {
   public static readonly type = "ForeignVariable";
 
   constructor(
-    public name: string | null,
     public ctype: string | null,
+    public name: string | null,
     public str: string | null,
     location: ILocation
   ) {
@@ -568,6 +573,30 @@ export class LambdaExpression extends BaseNode {
   constructor(
     public params: (Identifier | null)[] | null,
     public expression: BaseNode | null,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+// Comments are not actually nodes, but they share the same interface
+
+export class CommentLine extends BaseNode {
+  public static readonly type = "CommentLine";
+
+  constructor(
+    public text: string,
+    location: ILocation
+  ) {
+    super(location);
+  }
+}
+
+export class CommentBlock extends BaseNode {
+  public static readonly type = "CommentBlock";
+
+  constructor(
+    public text: string,
     location: ILocation
   ) {
     super(location);

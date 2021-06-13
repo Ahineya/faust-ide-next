@@ -256,7 +256,7 @@ export class MephistoValidatorVisitor extends MephistoBaseVisitor {
       console.log('Application to lambda');
     } else {
       // Application not to lambda, need to construct CompositionExpression node.params : node.callee
-      console.log('Application to whatever');
+      // console.log('Application to whatever');
 
       // TODO: Here for args we need to construct Parallel Composition nodes
       // node.args.reduce((acc, curr) => {
@@ -269,7 +269,7 @@ export class MephistoValidatorVisitor extends MephistoBaseVisitor {
         node.location,
       );
 
-      console.log(c);
+      // console.log(c);
 
       this.visitCompositionExpression(c);
     }

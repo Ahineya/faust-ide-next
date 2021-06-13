@@ -162,8 +162,8 @@ UNTERMINATED_STRING : '"' ( ESC | ~[\\"\r] )* ;
 
 FSTRING : '<'LETTER*'>' | '<'LETTER*'.'LETTER'>';
 
-COMMENT : '/*' .*? '*/' -> skip;
-LINE_COMMENT : '//' ~[\r\n]* -> skip;
+COMMENT : '/*' .*? '*/' -> channel(2);
+LINE_COMMENT : '//' ~[\r\n]* -> channel(2);
 MDOC: '<mdoc>' .*? '</mdoc>' -> skip;
 
 WSPACE : [ \t\r\n]+ -> skip;
