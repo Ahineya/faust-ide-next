@@ -153,11 +153,13 @@ export class FaustVisitor extends FaustParserVisitor {
   }
 
 
-  visitVariantstatement(ctx: VariantstatementContext): PrecisionDeclaration {
+  visitVariantstatement(ctx: VariantstatementContext): PrecisionDeclaration | null {
     const precisions: (string | null)[] = ctx.variant().map((v: VariantContext) => this.visitVariant(v));
     const declaration = this.visitStatement(ctx.variantStatement);
 
     return new PrecisionDeclaration(precisions, declaration, this.getLocation(ctx));
+
+
   }
 
   visitDefinition(ctx: DefinitionContext): Definition | null {
@@ -246,7 +248,11 @@ export class FaustVisitor extends FaustParserVisitor {
       const precisions: (string | null)[] = ctx.variant().map((v: VariantContext) => this.visitVariant(v));
       const declaration = this.visitDefinition(ctx.def);
 
-      return new PrecisionDeclaration(precisions, declaration, this.getLocation(ctx));
+      if (precisions.length) {
+        return new PrecisionDeclaration(precisions, declaration, this.getLocation(ctx));
+      }
+
+      return declaration;
     }
 
     if (ctx.def) {
@@ -1089,7 +1095,8 @@ export class FaustVisitor extends FaustParserVisitor {
       end: {
         line: ctx.stop?.line,
         column: ctx.stop?.column
-      }
+      },
+      range: [ctx.start.start, ctx.stop.start]
     }
   }
 }

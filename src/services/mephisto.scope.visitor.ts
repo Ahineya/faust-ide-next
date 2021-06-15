@@ -10,7 +10,7 @@ import {
   PatternDefinition,
   Program,
   Identifier
-} from "../../parser/build/ast/nodes.interface";
+} from "../../faust-ast/build/ast/nodes.interface";
 import {FSymbol, SymbolTable} from "./mephisto.symboltable";
 import {isNode} from "./mephisto.helpers";
 

@@ -1,4 +1,4 @@
-import {BaseNode} from "../../parser/build/ast/nodes.interface";
+import {BaseNode} from "../../faust-ast/build/ast/nodes.interface";
 
 export const isNode = (node: BaseNode, nodeClass: { type: string, [key: string]: any } | { type: string, [key: string]: any }[]): boolean => {
   if (!node) {

@@ -5,7 +5,8 @@ export interface IPosition {
 
 export interface ILocation {
   start: IPosition;
-  end: IPosition
+  end: IPosition;
+  range: [number, number];
 }
 
 export class BaseNode {
@@ -49,6 +50,7 @@ export class BaseNode {
 
 export class Program extends BaseNode {
   public static readonly type = 'Program';
+  public comments: (CommentLine | CommentBlock)[] = [];
 
   constructor(public body: (Definition | Import | Declare)[], location: ILocation) {
     super(location);

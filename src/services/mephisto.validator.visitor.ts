@@ -50,7 +50,7 @@ import {
   IdentifierDeclaration,
   PatternDefinition,
   IterativeExpression
-} from "../../parser/build/ast/nodes.interface";
+} from "../../faust-ast/build/ast/nodes.interface";
 import {isNode} from "./mephisto.helpers";
 import {MephistoBaseVisitor} from "./mephisto.visitor";
 import {SymbolTable} from "./mephisto.symboltable";

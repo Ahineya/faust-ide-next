@@ -5,22 +5,23 @@ import FaustParser from './generated/FaustParser.js';
 import {FaustErrorListener} from './FaustErrorListener.js';
 import {FaustVisitor} from "./FaustVisitor.js";
 import {FaustErrorStrategy} from "./FaustErrorStrategy.js";
-import {CommentLine, ILocation} from "./ast/nodes.interface";
+import {CommentBlock, CommentLine, ILocation} from "./ast/nodes.interface.js";
 
 const {CommonTokenStream, InputStream} = antlr4;
 
-  // const getLocation = (t: any): ILocation {
-  //   return {
-  //     start: {
-  //       line: ctx.start.line,
-  //       column: ctx.start.column
-  //     },
-  //     end: {
-  //       line: ctx.stop?.line,
-  //       column: ctx.stop?.column
-  //     }
-  //   }
-  // }
+  const getCommentLocation = (t: any): ILocation => {
+    return {
+      start: {
+        line: t.start?.line,
+        column: t.start?.column
+      },
+      end: {
+        line: t.stop?.line,
+        column: t.stop?.column
+      },
+      range: [t.start, t.stop]
+    }
+  }
 
 export const parse = (input: string, debug = false) => {
   const chars = new InputStream(input, true)
@@ -31,18 +32,14 @@ export const parse = (input: string, debug = false) => {
   console.log(tokens);
 
 
-  tokens.tokens.filter(t => [FaustLexer.COMMENT, FaustLexer.LINE_COMMENT].includes(t.type))
+  const comments = tokens.tokens.filter(t => [FaustLexer.COMMENT, FaustLexer.LINE_COMMENT].includes(t.type))
     .map(t => {
-      console.log('AAAAA', t);
+      if (t.type === FaustLexer.COMMENT) {
+        return new CommentBlock(t.text, getCommentLocation(t));
+      } else {
+        return new CommentLine(t.text, getCommentLocation(t));
+      }
     })
-
-  // tokens.tokens.forEach(t => {
-  //   if (t.type === FaustLexer.COMMENT || t.type === FaustLexer.LINE_COMMENT) {
-  //     console.log(t.text);
-  //
-  //
-  //   }
-  // })
 
   const parser = new FaustParser(tokens);
 
@@ -66,6 +63,7 @@ export const parse = (input: string, debug = false) => {
 
   const faustVisitor = new FaustVisitor();
   const AST = faustVisitor.visitProgram(tree);
+  AST.comments = comments;
 
   return {
     AST,

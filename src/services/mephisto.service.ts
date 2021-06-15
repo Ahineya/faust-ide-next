@@ -1,4 +1,4 @@
-import {parse} from "../../parser/build/parse.js";
+import {parse} from "../../faust-ast/build/parse.js";
 import {debounce} from "../helpers/debounce";
 import {
   Program,
@@ -6,7 +6,7 @@ import {
   ParIteration,
   ProdIteration, SeqIteration, SumIteration,
   Route
-} from "../../parser/build/ast/nodes.interface.js";
+} from "../../faust-ast/build/ast/nodes.interface.js";
 import {MephistoScopeVisitor} from "./mephisto.scope.visitor";
 import {MephistoValidatorVisitor} from "./mephisto.validator.visitor";
 import {isNode} from "./mephisto.helpers";

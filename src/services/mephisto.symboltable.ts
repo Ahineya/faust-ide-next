@@ -1,4 +1,4 @@
-import {BaseNode} from "../../parser/build/ast/nodes.interface";
+import {BaseNode} from "../../faust-ast/build/ast/nodes.interface";
 
 export class FSymbol {
   constructor(
