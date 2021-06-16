@@ -5,6 +5,7 @@ import IconRun from "../../images/icons/icon-run.svg";
 import IconStop from "../../images/icons/icon-stop.svg";
 import {faustStore} from "../../stores/faust.store";
 import classNames from "classnames";
+import {filesystemStore} from "../../stores/filesystem.store";
 
 export const TopPanel = () => {
 
@@ -32,7 +33,14 @@ export const TopPanel = () => {
     }
   }
 
+  const openProject = () => {
+    filesystemStore.openDirectory();
+  }
+
   return <div className="top-panel">
+    <div onClick={openProject}>
+      Open project
+    </div>
     <div className={classNames("button", {disabled: isRunning})} onClick={run}>
       <IconRun/>
     </div>

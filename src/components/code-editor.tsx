@@ -1,6 +1,6 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import Editor, {Monaco} from "@monaco-editor/react";
-import {editorStore} from "../stores/editor.store";
+import {editorStore, OpenedFile} from "../stores/editor.store";
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
 import "./code-editor.scss";
 
@@ -11,9 +11,21 @@ interface IProps {
 
 export const CodeEditor = (props: IProps) => {
 
+  const [currentFile, setCurrentFile] = useState<OpenedFile | null>(null);
+
+  useEffect(() => {
+    const subscriptions = [
+      editorStore.onCurrentFileChanged.subscribe(currentFile => {
+        setCurrentFile(currentFile);
+      })
+    ];
+
+    return () => subscriptions.forEach(s => s.unsubscribe());
+  }, []);
 
   const saveEditorState = (value: string | undefined, event: unknown) => {
     editorStore.hideError();
+    editorStore.saveEditorViewState();
     // console.log(value, event);
     if (value) {
       props.onChange(value);
@@ -34,6 +46,8 @@ export const CodeEditor = (props: IProps) => {
       onChange={saveEditorState}
       theme="vs-dark"
       value={props.value}
+      // defaultPath={currentFile?.file.key}
+      // defaultValue={''}
       beforeMount={setMonacoSettings}
       onMount={setMonacoEditor}
       options={{automaticLayout: true, mouseWheelZoom: true, fontSize: 13}}

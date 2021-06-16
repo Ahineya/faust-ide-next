@@ -1209,6 +1209,11 @@
   resolved "https://registry.yarnpkg.com/@types/scheduler/-/scheduler-0.16.1.tgz#18845205e86ff0038517aab7a18a62a6b9f71275"
   integrity sha512-EaCxbanVeyxDRTQBkdLb3Bvl/HK7PBK6UJjsSixB0iHKoWxE5uu2Q/DgtpOhPIojN0Zl1whvOd7PoHs2P0s5eA==
 
+"@types/wicg-file-system-access@^2020.9.1":
+  version "2020.9.1"
+  resolved "https://registry.yarnpkg.com/@types/wicg-file-system-access/-/wicg-file-system-access-2020.9.1.tgz#ae1f420b0ca70f545c8621a9b63ed29270ef724a"
+  integrity sha512-hEN/YpLwvDjhRJrKoBiyiKtIh2zNkmJ/GY9VWIXNgjy7TBZNM9upfb/rnWDGpOoLomnEQtlTBjFBFCDra1oxOQ==
+
 "@webassemblyjs/ast@1.11.0":
   version "1.11.0"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.11.0.tgz#a5aa679efdc9e51707a4207139da57920555961f"
@@ -4161,6 +4166,11 @@ icss-utils@^5.0.0, icss-utils@^5.1.0:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/icss-utils/-/icss-utils-5.1.0.tgz#c6be6858abd013d768e98366ae47e25d5887b1ae"
   integrity sha512-soFhflCVWLfRNOPU3iv5Z9VUdT44xFRbzjLsEzSr5AQmgqPMTHdU3PMT1Cf1ssx8fLNJDA1juftYl+PUcv3MqA==
+
+idb-keyval@^5.0.6:
+  version "5.0.6"
+  resolved "https://registry.yarnpkg.com/idb-keyval/-/idb-keyval-5.0.6.tgz#62fe4a6703fb5ec86661f41330c94fda65e6d0e6"
+  integrity sha512-6lJuVbwyo82mKSH6Wq2eHkt9LcbwHAelMIcMe0tP4p20Pod7tTxq9zf0ge2n/YDfMOpDryerfmmYyuQiaFaKOg==
 
 ieee754@^1.1.13:
   version "1.2.1"

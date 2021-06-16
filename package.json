@@ -1,6 +1,7 @@
 {
   "license": "GPL-3.0",
   "dependencies": {
+    "@ant-design/icons": "^4.6.2",
     "@babel/plugin-proposal-class-properties": "^7.13.0",
     "@babel/preset-typescript": "^7.13.0",
     "@grame/libfaust": "^1.0.2",
@@ -14,6 +15,7 @@
     "faust2webaudio": "grame-cncm/faust2webaudio",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.3.1",
+    "idb-keyval": "^5.0.6",
     "image-webpack-loader": "^7.0.1",
     "kissfft-js": "^0.1.8",
     "monaco-editor": "^0.24.0",
@@ -47,6 +49,7 @@
     "@types/classnames": "^2.3.1",
     "@types/kissfft-js": "^0.1.1",
     "@types/react-svg-pan-zoom": "^3.3.1",
+    "@types/wicg-file-system-access": "^2020.9.1",
     "babel-loader": "^8.2.2",
     "copy-webpack-plugin": "^9.0.0",
     "filemanager-webpack-plugin": "^5.0.0",
