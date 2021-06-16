@@ -23,6 +23,8 @@
   overflow: hidden;
   flex-grow: 1;
 
+  position: relative;
+
   & > *:first-child {
     flex-grow: 1;
   }

@@ -5,6 +5,8 @@ import {faustStore} from "../../stores/faust.store";
 import {useSettings} from "../../hooks/use-settings";
 import {Tabs} from "antd";
 import {editorStore, OpenedFile} from "../../stores/editor.store";
+
+import FaustLogo from "../../images/faust-logo-viewbox.svg";
 import {FSFile} from "../../stores/filesystem.store";
 
 export const EditorArea = () => {
@@ -35,11 +37,11 @@ export const EditorArea = () => {
     faustStore.setCode(code);
   }
 
-  const panes: {title: any, key: string}[] = useMemo(() => {
+  const panes: { title: any, key: string }[] = useMemo(() => {
     return openedFiles.map(of => {
 
       return {
-        title: of.isTemporary ? <em className="temporary-file">{of.file.title}</em> : of.file.title,
+        title: of.isTemporary ? <em className="temporary-file" onDoubleClick={() => {openFile(of.file)}}>{of.file.title}</em> : of.file.title,
         key: of.file.key
       }
     })
@@ -53,6 +55,10 @@ export const EditorArea = () => {
     if (action === 'remove') {
       editorStore.closeTab(targetKey);
     }
+  }
+
+  const openFile = (file: FSFile) => {
+    editorStore.openFile(file);
   }
 
   return <div className="editor-area">
@@ -71,5 +77,13 @@ export const EditorArea = () => {
     </Tabs>
     <CodeEditor onChange={changeFaustCode} value={faustCode}/>
     <div className="vim-bar" style={{display: editorSettings?.isVimMode ? 'block' : 'none'}}/>
+    {
+      !currentFile && <div className="editor-no-open-file-overlay">
+
+        <FaustLogo/>
+
+      </div>
+    }
+
   </div>;
 }

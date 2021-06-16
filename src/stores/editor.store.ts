@@ -16,8 +16,8 @@ const capitalize = (value: string): string => {
 export type OpenedFile = {
   file: FSFile,
   isTemporary: boolean,
-  model: editor.ITextModel | null,
   viewState: editor.ICodeEditorViewState | null,
+  value: string
 }
 
 class EditorStore {
@@ -156,11 +156,10 @@ class EditorStore {
   }
 
   openTemporaryFile(file: FSFile) {
+    this.editor!.focus();
+
     filesystemStore.getFileContent(file)
       .then(content => {
-          const tempModel = this.monaco!.editor.createModel(content, 'faust');
-          this.editor!.setModel(tempModel);
-
           const openedFiles = [...this.onOpenedFilesChanged.getValue()];
           const currentFile = this.onCurrentFileChanged.getValue();
 
@@ -168,8 +167,8 @@ class EditorStore {
             const newFile: OpenedFile = {
               file,
               isTemporary: true,
-              model: tempModel,
-              viewState: this.editor!.saveViewState()
+              viewState: this.editor!.saveViewState(),
+              value: content
             }
 
             openedFiles.splice(0, 0, newFile);
@@ -194,7 +193,8 @@ class EditorStore {
           if (currentFile.isTemporary) {
             const newFile = {
               ...openedFiles[currentFileIndex],
-              file
+              file,
+              value: content
             }
 
             openedFiles[currentFileIndex] = newFile;
@@ -205,8 +205,8 @@ class EditorStore {
             const newFile: OpenedFile = {
               file,
               isTemporary: true,
-              model: tempModel,
-              viewState: this.editor!.saveViewState()
+              viewState: this.editor!.saveViewState(),
+              value: content
             }
 
             openedFiles.splice(currentFileIndex + 1, 0, newFile);
@@ -227,8 +227,11 @@ class EditorStore {
       if (currentFile.isTemporary) {
         currentFile.isTemporary = false;
         openedFiles[currentFileIndex] = currentFile;
+        faustStore.setCode(currentFile.value);
         this.onOpenedFilesChanged.next(openedFiles);
         this.onCurrentFileChanged.next({...currentFile});
+
+        this.editor!.focus();
         return;
       }
     }
@@ -249,11 +252,8 @@ class EditorStore {
     }
 
     this.onCurrentFileChanged.next({...file});
-    this.editor!.setModel(file.model);
-    if (file.viewState) {
-      this.editor!.restoreViewState(file.viewState);
-    }
     this.editor!.focus();
+    faustStore.setCode(file.value);
   }
 
   closeTab(fileKey: string) {
@@ -277,7 +277,7 @@ class EditorStore {
     this.onOpenedFilesChanged.next(newOpenedFiles);
   }
 
-  saveEditorViewState() {
+  saveEditorViewState(value: string) {
     const openedFiles = [...this.onOpenedFilesChanged.getValue()];
     const currentFile = this.onCurrentFileChanged.getValue();
 
@@ -285,14 +285,19 @@ class EditorStore {
       return;
     }
 
+    if (currentFile.isTemporary) {
+      currentFile.isTemporary = false;
+    }
+
     const currentFileIndex = openedFiles.findIndex(of => of.file.key === currentFile.file.key);
 
-    currentFile.model = this.editor!.getModel();
-    currentFile.viewState = this.editor!.saveViewState();
+    currentFile.value = value;
 
     openedFiles[currentFileIndex] = {...currentFile};
     this.onCurrentFileChanged.next({...currentFile});
     this.onOpenedFilesChanged.next([...openedFiles]);
+
+    filesystemStore.writeToFile(currentFile.file, value);
   }
 }
 

@@ -16,6 +16,7 @@ export const CodeEditor = (props: IProps) => {
   useEffect(() => {
     const subscriptions = [
       editorStore.onCurrentFileChanged.subscribe(currentFile => {
+        console.log(currentFile);
         setCurrentFile(currentFile);
       })
     ];
@@ -25,8 +26,7 @@ export const CodeEditor = (props: IProps) => {
 
   const saveEditorState = (value: string | undefined, event: unknown) => {
     editorStore.hideError();
-    editorStore.saveEditorViewState();
-    // console.log(value, event);
+    editorStore.saveEditorViewState(value || '');
     if (value) {
       props.onChange(value);
     }
@@ -45,12 +45,12 @@ export const CodeEditor = (props: IProps) => {
       defaultLanguage="faust"
       onChange={saveEditorState}
       theme="vs-dark"
-      value={props.value}
-      // defaultPath={currentFile?.file.key}
-      // defaultValue={''}
+      defaultPath={''}
+      defaultValue={currentFile?.value}
+      path={currentFile?.file.key}
       beforeMount={setMonacoSettings}
       onMount={setMonacoEditor}
-      options={{automaticLayout: true, mouseWheelZoom: true, fontSize: 13}}
+      options={{automaticLayout: true, mouseWheelZoom: true, fontSize: 13, readOnly: !currentFile}}
     />
   </div>;
 }

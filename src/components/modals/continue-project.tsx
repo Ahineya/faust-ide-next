@@ -31,9 +31,11 @@ export const ContinueProjectModal = () => {
 
   return <div>
     <Modal
-          visible={!!dir && !hasPermission}
+          visible={!hasPermission}
           title="Title">
-      <button onClick={continueProject}>Continue working on {dir?.name}</button>
+      {
+        !!dir && <button onClick={continueProject}>Continue working on {dir.name}</button>
+      }
       <button onClick={startProject}>Start new project</button>
     </Modal>
 

@@ -7,6 +7,19 @@
 
   .editor-tabs {
     user-select: none;
+
+    .explorer-node {
+      display: flex;
+      align-items: flex-start;
+
+      .explorer-node-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 6px;
+        margin-top: 5px;
+      }
+    }
   }
 
   .vim-bar {
@@ -50,6 +63,25 @@
 
   .temporary-file {
     font-style: italic;
+  }
+
+  .editor-no-open-file-overlay {
+    position: absolute;
+    background-color: var(--color-primary);
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    svg {
+      width: 200px;
+      fill: var(--color-tertiary);
+    }
   }
 }
 

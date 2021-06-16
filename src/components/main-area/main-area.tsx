@@ -8,6 +8,7 @@ import {SidebarView} from "../sidebar-view/sidebar-view";
 import {RightBarView} from "../right-bar-view/right-bar-view";
 import {ReflexContainer, ReflexElement, ReflexSplitter} from "react-reflex";
 import 'react-reflex/styles.css';
+import {BottomBarView} from "../bottom-bar-view/bottom-bar-view";
 
 export const MainArea = () => {
 
@@ -48,31 +49,50 @@ export const MainArea = () => {
 
   return <div className="main-area">
     <Sidebar/>
-      <ReflexContainer orientation="vertical">
+    <div className="main-area-container">
+      <ReflexContainer orientation="horizontal">
 
-        {
-          leftSidebarView && <ReflexElement className="left-pane" minSize={200} size={leftSidebarSize} onResize={setPanelSize}>
-            <SidebarView/>
-          </ReflexElement>
-        }
-        {
-          leftSidebarView && <ReflexSplitter/>
-        }
+        <ReflexElement className="main-area-top" minSize={200}>
+          <ReflexContainer orientation="vertical">
 
-        <ReflexElement className="right-pane" key="editor" minSize={300}>
-          <EditorArea/>
+            {
+              leftSidebarView &&
+              <ReflexElement className="left-pane" minSize={200} size={leftSidebarSize} onResize={setPanelSize}>
+                <SidebarView/>
+              </ReflexElement>
+            }
+            {
+              leftSidebarView && <ReflexSplitter/>
+            }
+
+            <ReflexElement className="right-pane" key="editor" minSize={300}>
+              <EditorArea/>
+            </ReflexElement>
+
+            {
+              !!rightSidebarViews.length && <ReflexSplitter/>
+            }
+
+            {
+              !!rightSidebarViews.length &&
+              <ReflexElement minSize={200} size={rightSidebarSize} onResize={changeRightSidebarSize}>
+                <RightBarView/>
+              </ReflexElement>
+            }
+          </ReflexContainer>
         </ReflexElement>
 
-        {
-          !!rightSidebarViews.length && <ReflexSplitter/>
-        }
+        <ReflexSplitter/>
 
-        {
-          !!rightSidebarViews.length && <ReflexElement minSize={200} size={rightSidebarSize} onResize={changeRightSidebarSize}>
-            <RightBarView/>
-          </ReflexElement>
-        }
+        <ReflexElement className="main-area-bottom" minSize={200}>
+          <BottomBarView/>
+        </ReflexElement>
+
       </ReflexContainer>
+
+      <div className="bottom-bar">Bottom bar</div>
+    </div>
+
     <RightBar/>
   </div>;
 }

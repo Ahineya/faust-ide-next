@@ -47,11 +47,7 @@ process = a(1);`;
 
   setCode(code: string) {
     this.onCodeChanged.next(code);
-
     localStorage.setItem('code', code);
-
-    // const AST = parse(code);
-    // console.log(AST);
 
     mephisto.debouncedParseFaustCode(code);
   }
