@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useLayoutEffect, useMemo, useState} from "react";
 import "./editor-area.scss";
 import {CodeEditor} from "../code-editor";
 import {faustStore} from "../../stores/faust.store";
@@ -41,7 +41,9 @@ export const EditorArea = () => {
     return openedFiles.map(of => {
 
       return {
-        title: of.isTemporary ? <em className="temporary-file" onDoubleClick={() => {openFile(of.file)}}>{of.file.title}</em> : of.file.title,
+        title: of.isTemporary ? <em className="temporary-file" onDoubleClick={() => {
+          openFile(of.file)
+        }}>{of.file.title}</em> : of.file.title,
         key: of.file.key
       }
     })

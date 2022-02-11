@@ -30,7 +30,7 @@ export const DspUi = () => {
   }, [ui]);
 
   return <div className="dsp-ui">
-    <div className="dsp-ui-header"/>
+    {/*<div className="dsp-ui-header"/>*/}
     <TransformWrapper
       options={{minScale: 0.2, limitToBounds: false, centerContent: false}}
       doubleClick={{disabled: true}}

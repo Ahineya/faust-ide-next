@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "lib": [
+      "ES2020"
+    ],
+    "module": "CommonJS",
+    "moduleResolution":"node",
+    "target": "ES2020",
+    "rootDir": "./",
+    "outDir": "./build_node",
+    "allowJs": true,
+    "checkJs": false
+  }
+}

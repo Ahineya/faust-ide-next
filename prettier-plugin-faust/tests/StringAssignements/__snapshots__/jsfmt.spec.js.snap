@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`example.toml 1`] = `
+import ("stdfaust.lib"   );
+
+process    = _;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+import("stdfaust.lib");
+
+process = _;
+
+`;

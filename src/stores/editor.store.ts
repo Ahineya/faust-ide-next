@@ -28,12 +28,10 @@ class EditorStore {
 
   private vimModeController: any;
 
+  public onEditorLoaded = new BehaviorSubject(false);
+
   public onOpenedFilesChanged = new BehaviorSubject<OpenedFile[]>([]);
   public onCurrentFileChanged = new BehaviorSubject<OpenedFile | null>(null);
-
-  constructor() {
-
-  }
 
   private subscribeToSettingsChanges() {
     settingsStore.onSettingsChanged.subscribe(settings => {
@@ -44,19 +42,33 @@ class EditorStore {
   }
 
   setMonacoInstance(monaco: Monaco) {
+    const isFirstLoad = !this.monaco;
+
     this.monaco = monaco;
-    faustStore.getFaust()
-      .then(faust => {
-        faustLangRegister(monaco, faust);
-      })
+
+    if (isFirstLoad) {
+      faustStore.getFaust()
+        .then(faust => {
+          faustLangRegister(monaco, faust);
+        })
+    }
   }
 
   setEditor(editor: editor.ICodeEditor) {
+    const isFirstLoad = !this.editor;
+
     this.editor = editor;
+    this.onEditorLoaded.next(true);
 
-    console.log('SUBSCRIBING TO EDITOR SETTINGS');
+    if (isFirstLoad) {
+      this.subscribeToSettingsChanges();
+      return;
+    }
 
-    this.subscribeToSettingsChanges();
+    if (this.vimModeController) {
+      this.disableVimMode();
+      this.enableVimMode();
+    }
   }
 
   toggleVimMode() {
@@ -71,6 +83,7 @@ class EditorStore {
     }
 
     this.vimModeController = initVimMode(this.editor, document.querySelector('.vim-bar'));
+
     this.editor!.updateOptions({
       cursorStyle: "block"
     });
@@ -89,6 +102,44 @@ class EditorStore {
       }
 
     });
+  }
+
+  enableVimMode() {
+    setTimeout(() => {
+      this.vimModeController = initVimMode(this.editor, document.querySelector('.vim-bar'));
+
+      this.editor!.updateOptions({
+        cursorStyle: "block"
+      });
+
+      this.vimModeController.on('vim-mode-change', ({mode}: { mode: string }) => {
+        if (mode === 'insert') {
+          this.editor!.updateOptions({
+            cursorStyle: "line"
+          });
+        }
+
+        if (mode === 'normal') {
+          this.editor!.updateOptions({
+            cursorStyle: "block"
+          });
+        }
+
+      });
+    }, 50);
+
+  }
+
+  disableVimMode() {
+    if (this.vimModeController) {
+      this.vimModeController.dispose();
+      this.vimModeController = null;
+
+      this.editor!.updateOptions({
+        cursorStyle: "line"
+      });
+      return;
+    }
   }
 
   showMephistoErrors(errors: string[]) {

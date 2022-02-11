@@ -47,6 +47,8 @@ export const MainArea = () => {
     setRightSidebarSize((domElement as HTMLDivElement).offsetWidth);
   }
 
+  console.log('LEFT SIDEBAR VIEW', leftSidebarView);
+
   return <div className="main-area">
     <Sidebar/>
     <div className="main-area-container">
@@ -55,42 +57,39 @@ export const MainArea = () => {
         <ReflexElement className="main-area-top" minSize={200}>
           <ReflexContainer orientation="vertical">
 
-            {
-              leftSidebarView &&
-              <ReflexElement className="left-pane" minSize={200} size={leftSidebarSize} onResize={setPanelSize}>
-                <SidebarView/>
-              </ReflexElement>
-            }
-            {
-              leftSidebarView && <ReflexSplitter/>
-            }
+            <ReflexElement className="left-pane" key="left-sidebar" minSize={leftSidebarView ? 200 : 0}
+                           maxSize={leftSidebarView ? 1000 : 0} size={leftSidebarView ? leftSidebarSize : 1}
+                           onResize={setPanelSize}>
+              <SidebarView/>
+            </ReflexElement>
+            <ReflexSplitter style={{display: leftSidebarView ? 'block' : 'none'}}/>
 
             <ReflexElement className="right-pane" key="editor" minSize={300}>
               <EditorArea/>
             </ReflexElement>
 
-            {
-              !!rightSidebarViews.length && <ReflexSplitter/>
-            }
+            {/*{*/}
+            {/*  !!rightSidebarViews.length && <ReflexSplitter/>*/}
+            {/*}*/}
 
-            {
-              !!rightSidebarViews.length &&
-              <ReflexElement minSize={200} size={rightSidebarSize} onResize={changeRightSidebarSize}>
-                <RightBarView/>
-              </ReflexElement>
-            }
+            {/*{*/}
+            {/*  !!rightSidebarViews.length &&*/}
+            {/*  <ReflexElement minSize={200} size={rightSidebarSize} onResize={changeRightSidebarSize}>*/}
+            {/*    <RightBarView/>*/}
+            {/*  </ReflexElement>*/}
+            {/*}*/}
           </ReflexContainer>
         </ReflexElement>
 
         <ReflexSplitter/>
 
-        <ReflexElement className="main-area-bottom" minSize={200}>
+        <ReflexElement className="main-area-bottom" minSize={200} maxSize={300}>
+          <div className="bottom-bar">Bottom bar</div>
           <BottomBarView/>
         </ReflexElement>
 
       </ReflexContainer>
 
-      <div className="bottom-bar">Bottom bar</div>
     </div>
 
     <RightBar/>

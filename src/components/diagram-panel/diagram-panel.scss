@@ -5,14 +5,17 @@
   border-left: 1px solid var(--color-primary);
   border-right: 1px solid var(--color-primary);
   user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  //display: flex;
+  //align-items: center;
+  //justify-content: center;
 
   & > div {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    margin: auto 0;
+    height: 100%;
 
     svg {
       max-width: 100%;

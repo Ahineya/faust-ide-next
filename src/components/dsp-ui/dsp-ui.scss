@@ -1,5 +1,8 @@
 .dsp-ui {
   height: 100%;
+  max-width: calc(100vw - 85px);
+  width: calc(100vw - 85px);
+
   overflow: auto;
 
 
@@ -9,8 +12,10 @@
 
   }
 
-  & > div {
+  & > .react-transform-component {
     height: calc(100% - 32px);
-    width: 100%;
+    display: flex;
+    overflow: visible;
+    max-width: calc(100vw - 85px);
   }
 }
